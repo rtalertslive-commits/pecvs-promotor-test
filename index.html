@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PECVS$ — Coach Analytics v1.3.6</title>
+    <title>PECVS$ — Coach Analytics v1.3.7</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link
         href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@700&display=swap"
@@ -787,7 +787,7 @@
                 <i class="fa-brands fa-google"></i> Continuar con Google
             </button>
             <div style="margin-top: 25px; font-size: 11px; color: var(--slate); opacity: 0.6;">
-                v1.3.6 — Sincronización mediante Google Firebase
+                v1.3.7 — Sincronización mediante Google Firebase
             </div>
         </div>
     </div>
@@ -798,7 +798,7 @@
         <div class="header">
             <div class="header-left">
                 <h1><i class="fa-solid fa-chart-line" style="font-size:22px;margin-right:10px;"></i>PECVS$ Analytics
-                    <small style="font-size:10px; color:var(--slate);">v1.3.6</small>
+                    <small style="font-size:10px; color:var(--slate);">v1.3.7</small>
                 </h1>
                 <p id="coach-display">Coach: —</p>
                 <p id="team-display" style="font-size:10px; color:var(--gold); font-weight:700;">Equipo: Sin Código</p>
@@ -996,9 +996,13 @@
             <div class="card">
                 <div class="charts-controls">
                     <div>
-                        <label class="field-label">Mes</label>
-                        <select id="kpi-mes-sel" onchange="renderKPIs()">
-                            <option value="">Todos los meses</option>
+                        <label class="field-label">Período</label>
+                        <select id="kpi-period-sel" onchange="renderKPIs()">
+                            <option value="12m">Últimos 12 meses</option>
+                            <option value="3m">Últimos 3 meses</option>
+                            <option value="6m">Últimos 6 meses</option>
+                            <option value="1y">Este año</option>
+                            <option value="all">Todo el historial</option>
                         </select>
                     </div>
                 </div>
@@ -1059,9 +1063,13 @@
                         </select>
                     </div>
                     <div>
-                        <label class="field-label">Mes</label>
-                        <select id="chart-mes-sel" onchange="renderCharts()">
-                            <option value="">Todos los meses</option>
+                        <label class="field-label">Período</label>
+                        <select id="chart-period-sel" onchange="renderCharts()">
+                            <option value="12m">Últimos 12 meses</option>
+                            <option value="3m">Últimos 3 meses</option>
+                            <option value="6m">Últimos 6 meses</option>
+                            <option value="1y">Este año</option>
+                            <option value="all">Todo el historial</option>
                         </select>
                     </div>
                 </div>
@@ -1290,7 +1298,7 @@
                         const newSW = reg.installing;
                         newSW.onstatechange = () => {
                             if (newSW.state === 'installed' && navigator.serviceWorker.controller) {
-                                if (confirm('Nueva versión disponible (v1.3.6). ¿Recargar ahora para actualizar?')) {
+                                if (confirm('Nueva versión disponible (v1.3.7). ¿Recargar ahora para actualizar?')) {
                                     window.location.reload();
                                 }
                             }
@@ -1742,12 +1750,28 @@
                 });
             });
 
-            ['lb-mes-filter', 'chart-mes-sel', 'kpi-mes-sel'].forEach(id => {
-                const el = document.getElementById(id);
-                const cur = el.value;
-                el.innerHTML = '<option value="">Todos los meses</option>' + todosLosMeses;
-                if (mesesConDatos.includes(cur) || cur === '') el.value = cur;
-            });
+            const lbFilter = document.getElementById('lb-mes-filter');
+            const curLb = lbFilter.value;
+            lbFilter.innerHTML = '<option value="">Todos los meses</option>' + todosLosMeses;
+            if (mesesConDatos.includes(curLb) || curLb === '') lbFilter.value = curLb;
+
+            // Set default leaderboard to last month and last week
+            initLeaderboardDefaults();
+        }
+
+        function initLeaderboardDefaults() {
+            if (state.entries.length === 0) return;
+
+            // Find last month
+            const mesesConDatos = [...new Set(state.entries.map(e => e.mes))];
+            const lastMes = mesesConDatos.sort().reverse()[0];
+            document.getElementById('lb-mes-filter').value = lastMes;
+            refreshLeaderboardWeeks();
+
+            // Find last week in that month
+            const entriesLastMes = state.entries.filter(e => e.mes === lastMes);
+            const lastWeek = Math.max(...entriesLastMes.map(e => parseInt(e.semana)));
+            document.getElementById('lb-sem-filter').value = lastWeek;
         }
 
         // ─── LEADERBOARD ──────────────────────────────────────────────────────────────
@@ -1930,12 +1954,50 @@
 
         function renderCharts() {
             const agSel = document.getElementById('chart-agent-sel').value;
-            const mesSel = document.getElementById('chart-mes-sel').value;
+            const period = document.getElementById('chart-period-sel').value;
+            let entries = [];
 
-            let entries = state.entries.filter(e =>
-                (agSel === '__all__' || e.agent === agSel) &&
-                (!mesSel || e.mes === mesSel)
-            );
+            // Find the latest month in the data
+            let latestDate = null;
+            state.entries.forEach(e => {
+                const [mes, year] = e.mes.split(' ');
+                const monthIdx = MONTHS_ES.indexOf(mes) + 1;
+                const entryDate = new Date(parseInt(year), monthIdx - 1, 1);
+                if (!latestDate || entryDate > latestDate) {
+                    latestDate = entryDate;
+                }
+            });
+
+            let filtered = state.entries;
+            if (latestDate) {
+                if (period === '12m' || period === '1y') {
+                    const last12Months = new Date(latestDate.getFullYear(), latestDate.getMonth() - 11, 1);
+                    filtered = state.entries.filter(e => {
+                        const [mes, year] = e.mes.split(' ');
+                        const monthIdx = MONTHS_ES.indexOf(mes) + 1;
+                        const entryDate = new Date(parseInt(year), monthIdx - 1, 1);
+                        return entryDate >= last12Months;
+                    });
+                } else if (period === '3m') {
+                    const last3Months = new Date(latestDate.getFullYear(), latestDate.getMonth() - 2, 1);
+                    filtered = state.entries.filter(e => {
+                        const [mes, year] = e.mes.split(' ');
+                        const monthIdx = MONTHS_ES.indexOf(mes) + 1;
+                        const entryDate = new Date(parseInt(year), monthIdx - 1, 1);
+                        return entryDate >= last3Months;
+                    });
+                } else if (period === '6m') {
+                    const last6Months = new Date(latestDate.getFullYear(), latestDate.getMonth() - 5, 1);
+                    filtered = state.entries.filter(e => {
+                        const [mes, year] = e.mes.split(' ');
+                        const monthIdx = MONTHS_ES.indexOf(mes) + 1;
+                        const entryDate = new Date(parseInt(year), monthIdx - 1, 1);
+                        return entryDate >= last6Months;
+                    });
+                }
+            }
+
+            entries = filtered.filter(e => agSel === '__all__' || e.agent === agSel);
 
             // Build x-axis labels: unique "mes · SemN" sorted
             const labelSet = [...new Set(entries.map(e => `${e.mes}·S${e.semana}`))].sort();
@@ -2044,8 +2106,51 @@
 
         // ─── KPI CHARTS ──────────────────────────────────────────────────────────────
         function renderKPIs() {
-            const mesSel = document.getElementById('kpi-mes-sel').value;
-            let entries = state.entries.filter(e => !mesSel || e.mes === mesSel);
+            const period = document.getElementById('kpi-period-sel').value;
+            let entries = [];
+
+            // Find the latest month in the data
+            let latestDate = null;
+            state.entries.forEach(e => {
+                const [mes, year] = e.mes.split(' ');
+                const monthIdx = MONTHS_ES.indexOf(mes) + 1;
+                const entryDate = new Date(parseInt(year), monthIdx - 1, 1);
+                if (!latestDate || entryDate > latestDate) {
+                    latestDate = entryDate;
+                }
+            });
+
+            if (!latestDate) {
+                entries = state.entries;
+            } else {
+                if (period === '12m' || period === '1y') {
+                    const last12Months = new Date(latestDate.getFullYear(), latestDate.getMonth() - 11, 1);
+                    entries = state.entries.filter(e => {
+                        const [mes, year] = e.mes.split(' ');
+                        const monthIdx = MONTHS_ES.indexOf(mes) + 1;
+                        const entryDate = new Date(parseInt(year), monthIdx - 1, 1);
+                        return entryDate >= last12Months;
+                    });
+                } else if (period === '3m') {
+                    const last3Months = new Date(latestDate.getFullYear(), latestDate.getMonth() - 2, 1);
+                    entries = state.entries.filter(e => {
+                        const [mes, year] = e.mes.split(' ');
+                        const monthIdx = MONTHS_ES.indexOf(mes) + 1;
+                        const entryDate = new Date(parseInt(year), monthIdx - 1, 1);
+                        return entryDate >= last3Months;
+                    });
+                } else if (period === '6m') {
+                    const last6Months = new Date(latestDate.getFullYear(), latestDate.getMonth() - 5, 1);
+                    entries = state.entries.filter(e => {
+                        const [mes, year] = e.mes.split(' ');
+                        const monthIdx = MONTHS_ES.indexOf(mes) + 1;
+                        const entryDate = new Date(parseInt(year), monthIdx - 1, 1);
+                        return entryDate >= last6Months;
+                    });
+                } else {
+                    entries = state.entries;
+                }
+            }
 
             const agMap = {};
             entries.forEach(e => {
