@@ -1199,6 +1199,19 @@
 
                 <!-- Segunda pregunta (oculta) -->
                 <div id="reclutamiento-q2" style="display:none; margin-bottom:20px;">
+                    <label class="field-label">¿Cuántos tienes a tu cargo?</label>
+                    <input type="number" id="reclutamiento-cantidad" min="0" max="10" placeholder="Cantidad de prospectos" style="width:100%; padding:8px; border:1px solid var(--slate); border-radius:4px; background:var(--dark-bg); color:var(--light);">
+                </div>
+
+                <!-- Tercera pregunta (oculta) -->
+                <div id="reclutamiento-q3" style="display:none; margin-bottom:20px;">
+                    <label class="field-label">¿Cómo se llama(n)?</label>
+                    <textarea id="reclutamiento-nombres" rows="3"
+                        placeholder="Escribe los nombres separados por comas..."></textarea>
+                </div>
+
+                <!-- Cuarta pregunta (oculta) -->
+                <div id="reclutamiento-q4" style="display:none; margin-bottom:20px;">
                     <label class="field-label">¿Para cuando lo puedes formalizar a agente con clave?</label>
                     <textarea id="reclutamiento-compromiso" rows="3"
                         placeholder="Describe tu compromiso de formalización..."></textarea>
@@ -2506,6 +2519,24 @@
             document.getElementById('rpt-agentes').value = r ? (r.agentes || '') : '';
             document.getElementById('rpt-compromisos').value = r ? (r.compromisos || '') : '';
             document.getElementById('rpt-notas').value = r ? (r.notas || '') : '';
+
+            // Cargar reclutamiento
+            const recl = (state.reclutamiento || []).find(e => e.mes === mesStr);
+            const btnSi = document.getElementById('btn-reclutamiento-si');
+            const btnNo = document.getElementById('btn-reclutamiento-no');
+            if (recl) {
+                handleReclutamientoQ1(recl.q1);
+                if (recl.q1 === 'si') {
+                    document.getElementById('reclutamiento-cantidad').value = recl.q2 || '';
+                    document.getElementById('reclutamiento-nombres').value = recl.q3 || '';
+                    document.getElementById('reclutamiento-compromiso').value = recl.q4 || '';
+                }
+            } else {
+                handleReclutamientoQ1('no');
+                document.getElementById('reclutamiento-cantidad').value = '';
+                document.getElementById('reclutamiento-nombres').value = '';
+                document.getElementById('reclutamiento-compromiso').value = '';
+            }
         }
 
         async function saveReporte() {
@@ -2520,7 +2551,9 @@
             const btnSi = document.getElementById('btn-reclutamiento-si');
             const btnNo = document.getElementById('btn-reclutamiento-no');
             const reclutamientoQ1 = btnSi.style.opacity === '0.5' ? 'si' : (btnNo.style.opacity === '0.5' ? 'no' : null);
-            const reclutamientoQ2 = document.getElementById('reclutamiento-compromiso').value.trim();
+            const reclutamientoQ2 = document.getElementById('reclutamiento-cantidad').value.trim();
+            const reclutamientoQ3 = document.getElementById('reclutamiento-nombres').value.trim();
+            const reclutamientoQ4 = document.getElementById('reclutamiento-compromiso').value.trim();
 
             // Validaciones
             if (!mesVal) { alert('Selecciona el mes del reporte'); return; }
@@ -2529,7 +2562,9 @@
             if (!fraude) { alert('Completa la sospecha de fraude en actividad'); return; }
             if (!compromisos) { alert('Completa los compromisos del coach'); return; }
             if (reclutamientoQ1 === null) { alert('Responde la primera pregunta de reclutamiento'); return; }
-            if (reclutamientoQ1 === 'si' && !reclutamientoQ2) { alert('Describe tu compromiso de formalización'); return; }
+            if (reclutamientoQ1 === 'si' && !reclutamientoQ2) { alert('Indica cuántos prospectos tienes a tu cargo'); return; }
+            if (reclutamientoQ1 === 'si' && !reclutamientoQ3) { alert('Escribe los nombres de los prospectos'); return; }
+            if (reclutamientoQ1 === 'si' && !reclutamientoQ4) { alert('Describe tu compromiso de formalización'); return; }
 
             const mes = mesVal + ' ' + yearVal;
             const rpt = {
@@ -2551,7 +2586,9 @@
                 fecha: new Date().toISOString(),
                 mes,
                 q1: reclutamientoQ1,
-                q2: reclutamientoQ2
+                q2: reclutamientoQ1 === 'si' ? reclutamientoQ2 : '',
+                q3: reclutamientoQ1 === 'si' ? reclutamientoQ3 : '',
+                q4: reclutamientoQ1 === 'si' ? reclutamientoQ4 : ''
             };
             if (!state.reclutamiento) state.reclutamiento = [];
             const reclIdx = state.reclutamiento.findIndex(e => e.mes === mes);
@@ -2607,6 +2644,10 @@
         // ─── RECLUTAMIENTO ─────────────────────────────────────────────────────────────
         function handleReclutamientoQ1(respuesta) {
             const q2Div = document.getElementById('reclutamiento-q2');
+            const q3Div = document.getElementById('reclutamiento-q3');
+            const q4Div = document.getElementById('reclutamiento-q4');
+            const cantidad = document.getElementById('reclutamiento-cantidad');
+            const nombres = document.getElementById('reclutamiento-nombres');
             const compromiso = document.getElementById('reclutamiento-compromiso');
             const btnSi = document.getElementById('btn-reclutamiento-si');
             const btnNo = document.getElementById('btn-reclutamiento-no');
@@ -2618,10 +2659,16 @@
             if (respuesta === 'si') {
                 btnSi.style.opacity = '0.5';
                 q2Div.style.display = 'block';
-                compromiso.focus();
+                q3Div.style.display = 'block';
+                q4Div.style.display = 'block';
+                cantidad.focus();
             } else if (respuesta === 'no') {
                 btnNo.style.opacity = '0.5';
                 q2Div.style.display = 'none';
+                q3Div.style.display = 'none';
+                q4Div.style.display = 'none';
+                cantidad.value = '';
+                nombres.value = '';
                 compromiso.value = '';
             }
         }
@@ -2687,10 +2734,17 @@
 
             historialDiv.innerHTML = entries.map(e => {
                 const fecha = new Date(e.fecha).toLocaleDateString('es-MX');
-                const respuesta = e.q1 === 'si' ? `Sí - Compromiso: ${e.q2}` : 'Todavía no';
+                let respuesta = '';
+                if (e.q1 === 'si') {
+                    respuesta = `Sí - ${e.q2 || '0'} prospectos`;
+                    if (e.q3) respuesta += ` (${e.q3})`;
+                    respuesta += ` - Compromiso: ${e.q4 || ''}`;
+                } else {
+                    respuesta = 'Todavía no';
+                }
                 return `<div style="padding:8px; border-left:3px solid var(--gold); margin-bottom:8px;">
                     <div style="font-weight:600;">${e.mes} (${fecha})</div>
-                    <div style="color:var(--slate);">${respuesta}</div>
+                    <div style="color:var(--slate); font-size:11px;">${respuesta}</div>
                 </div>`;
             }).join('');
         }
