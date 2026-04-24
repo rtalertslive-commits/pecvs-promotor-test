@@ -885,13 +885,23 @@
                     <tbody id="week-body"></tbody>
                     <tfoot>
                         <tr>
-                            <td class="day-label">TOTAL</td>
+                            <td class="day-label">TOTAL SEM</td>
                             <td class="total-cell" id="tt-P">0</td>
                             <td class="total-cell" id="tt-E">0</td>
                             <td class="total-cell" id="tt-C">0</td>
                             <td class="total-cell" id="tt-V">0</td>
                             <td class="total-cell" id="tt-S">0</td>
                             <td class="total-cell" id="tt-$">$0</td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td class="day-label">TOTAL MES</td>
+                            <td class="total-cell" id="ttm-P">0</td>
+                            <td class="total-cell" id="ttm-E">0</td>
+                            <td class="total-cell" id="ttm-C">0</td>
+                            <td class="total-cell" id="ttm-V">0</td>
+                            <td class="total-cell" id="ttm-S">0</td>
+                            <td class="total-cell" id="ttm-$">$0</td>
                             <td></td>
                         </tr>
                     </tfoot>
@@ -1631,7 +1641,33 @@
             });
             COLS.forEach(c => { document.getElementById('tt-' + c).textContent = totals[c]; });
             document.getElementById('tt-$').textContent = '$' + totals.prima.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+            // Update month totals
+            updateMonthTotals();
+
             if (autoSave) saveEntry(true);
+        }
+
+        function updateMonthTotals() {
+            const agent = document.getElementById('sel-agent').value;
+            const mes = getMesStr();
+            const monthTotals = { P: 0, E: 0, C: 0, V: 0, S: 0, prima: 0 };
+
+            if (agent && mes && state.entries) {
+                const agentEntries = state.entries.filter(e => e.agent === agent && e.mes === mes);
+                agentEntries.forEach(entry => {
+                    entry.dias.forEach(d => {
+                        const { ok } = validateDay(d);
+                        if (ok) {
+                            COLS.forEach(c => monthTotals[c] += d[c]);
+                            monthTotals.prima += d.prima;
+                        }
+                    });
+                });
+            }
+
+            COLS.forEach(c => { document.getElementById('ttm-' + c).textContent = monthTotals[c]; });
+            document.getElementById('ttm-$').textContent = '$' + monthTotals.prima.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         }
 
         function clearForm(autoSave = true) {
