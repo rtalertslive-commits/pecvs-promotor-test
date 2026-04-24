@@ -1309,6 +1309,7 @@
                 state.teamCode = data.teamCode || '';
                 state.promotorCode = data.promotorCode || '';
                 state.reportes = data.reportes || [];
+                state.agentesAsignados = data.agentes || [];
                 document.getElementById('team-display').textContent = 'Equipo: ' + (state.teamCode || 'Sin Código');
                 startListeningAgents();
             } else {
@@ -1333,31 +1334,37 @@
 
         function startListeningAgents() {
             if (unsubAgents) unsubAgents();
-            if (!state.teamCode) return;
+            if (!state.agentesAsignados || state.agentesAsignados.length === 0) return;
 
-            const q = query(collection(db, "users"), where("teamCode", "==", state.teamCode));
-            unsubAgents = onSnapshot(q, (snapshot) => {
-                const allEntries = [];
-                const allAgents = [];
-                snapshot.forEach((doc) => {
-                    const agentData = doc.data();
-                    if (agentData.agentName) {
-                        allAgents.push(agentData.agentName);
-                        if (agentData.entries) {
-                            // Ensure each entry knows which agent it belongs to
-                            agentData.entries.forEach(e => {
-                                e.agent = agentData.agentName;
-                                // Deduplicate or merge entries
-                                const existingIdx = allEntries.findIndex(ae => ae.agent === e.agent && ae.mes === e.mes && ae.semana == e.semana);
-                                if (existingIdx >= 0) allEntries[existingIdx] = e;
-                                else allEntries.push(e);
-                            });
+            const allEntries = [];
+            const allAgents = [];
+            let loadedCount = 0;
+
+            state.agentesAsignados.forEach((agenteRef) => {
+                const agentDocRef = doc(db, "users", agenteRef.email);
+                onSnapshot(agentDocRef, (docSnap) => {
+                    if (docSnap.exists()) {
+                        const agentData = docSnap.data();
+                        if (agentData.agentName) {
+                            const agentNameIdx = allAgents.indexOf(agentData.agentName);
+                            if (agentNameIdx === -1) allAgents.push(agentData.agentName);
+
+                            if (agentData.entries) {
+                                agentData.entries.forEach(e => {
+                                    e.agent = agentData.agentName;
+                                    const existingIdx = allEntries.findIndex(ae => ae.agent === e.agent && ae.mes === e.mes && ae.semana == e.semana);
+                                    if (existingIdx >= 0) allEntries[existingIdx] = e;
+                                    else allEntries.push(e);
+                                });
+                            }
+
+                            state.agents = allAgents;
+                            state.entries = allEntries;
+                            refreshAll();
                         }
                     }
+                    loadedCount++;
                 });
-                state.agents = allAgents;
-                state.entries = allEntries;
-                refreshAll();
             });
         }
 
