@@ -1005,6 +1005,12 @@
                             <option value="all">Todo el historial</option>
                         </select>
                     </div>
+                    <div>
+                        <label class="field-label">Mes (Opcional)</label>
+                        <select id="kpi-mes-sel" onchange="renderKPIs()">
+                            <option value="">Todos</option>
+                        </select>
+                    </div>
                 </div>
                 <div class="charts-grid">
                     <div class="chart-card full">
@@ -1750,10 +1756,13 @@
                 });
             });
 
-            const lbFilter = document.getElementById('lb-mes-filter');
-            const curLb = lbFilter.value;
-            lbFilter.innerHTML = '<option value="">Todos los meses</option>' + todosLosMeses;
-            if (mesesConDatos.includes(curLb) || curLb === '') lbFilter.value = curLb;
+            ['lb-mes-filter', 'kpi-mes-sel'].forEach(id => {
+                const el = document.getElementById(id);
+                const cur = el.value;
+                const label = id === 'lb-mes-filter' ? 'Todos los meses' : 'Todos';
+                el.innerHTML = `<option value="">${label}</option>` + todosLosMeses;
+                if (mesesConDatos.includes(cur) || cur === '') el.value = cur;
+            });
 
             // Set default leaderboard to last month and last week
             initLeaderboardDefaults();
@@ -1999,8 +2008,20 @@
 
             entries = filtered.filter(e => agSel === '__all__' || e.agent === agSel);
 
-            // Build x-axis labels: unique "mes · SemN" sorted
-            const labelSet = [...new Set(entries.map(e => `${e.mes}·S${e.semana}`))].sort();
+            // Build x-axis labels: unique "mes · SemN" sorted by date
+            const labelSet = [...new Set(entries.map(e => `${e.mes}·S${e.semana}`))].sort((a, b) => {
+                const [mesA, semA] = a.split('·');
+                const [mesB, semB] = b.split('·');
+                const [mA, yA] = mesA.split(' ');
+                const [mB, yB] = mesB.split(' ');
+                const monthA = MONTHS_ES.indexOf(mA) + 1;
+                const monthB = MONTHS_ES.indexOf(mB) + 1;
+                const yearA = parseInt(yA);
+                const yearB = parseInt(yB);
+                if (yearA !== yearB) return yearA - yearB;
+                if (monthA !== monthB) return monthA - monthB;
+                return parseInt(semA.replace('S', '')) - parseInt(semB.replace('S', ''));
+            });
             const labels = labelSet.map(l => l.replace('·', ' · Sem '));
 
             // Aggregate per label (re-summing only valid days)
@@ -2150,6 +2171,12 @@
                 } else {
                     entries = state.entries;
                 }
+            }
+
+            // Apply optional month filter
+            const mesSel = document.getElementById('kpi-mes-sel').value;
+            if (mesSel) {
+                entries = entries.filter(e => e.mes === mesSel);
             }
 
             const agMap = {};
