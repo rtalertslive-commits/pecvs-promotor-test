@@ -1097,12 +1097,10 @@
             </div>
         </div>
 
-        <!-- ═══════════════════ TAB: REPORTE MENSUAL ═══════════════════ -->
+        <!-- ═══════════════════ TAB: REPORTE VENTAS ═══════════════════ -->
         <div id="tab-reporte" class="tab-panel">
             <div class="card">
-                <p class="card-title"><i class="fa fa-file-lines"></i> Reporte Mensual del Coach</p>
-                <div class="info-box">Este espacio es para que el coach registre su análisis, observaciones y
-                    compromisos del mes. Queda incluido al exportar el JSON para enviarlo a dirección.</div>
+                <p class="card-title"><i class="fa fa-file-lines"></i> Reporte Ventas</p>
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px;">
                     <div style="display:flex;gap:8px;">
                         <div style="flex:1;">
@@ -1221,14 +1219,6 @@
                     <div class="agent-list" id="agent-list"></div>
                     <p style="font-size:10px; color:var(--slate); margin-top:5px;">Los agentes que ingresen tu código
                         aparecerán aquí automáticamente.</p>
-                </div>
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px;">
-                    <button class="btn btn-sm" onclick="exportConfig()"><i class="fa fa-file-export"></i>Exportar
-                        Config</button>
-                    <button class="btn btn-sm" onclick="document.getElementById('import-config-file').click()"><i
-                            class="fa fa-file-import"></i>Importar Config</button>
-                    <input type="file" id="import-config-file" accept=".json" style="display:none"
-                        onchange="importConfig(event)">
                 </div>
                 <button class="btn btn-green" onclick="saveConfig()"><i class="fa fa-floppy-disk"></i>Guardar
                     configuración</button>
@@ -2397,7 +2387,7 @@
             reader.readAsText(file);
         }
 
-        // ─── REPORTE MENSUAL ──────────────────────────────────────────────────────────
+        // ─── REPORTE VENTAS ──────────────────────────────────────────────────────────
         function tryLoadReporte() {
             const mesStr = document.getElementById('rpt-mes').value + ' ' + document.getElementById('rpt-year').value;
             const r = (state.reportes || []).find(r => r.mes === mesStr);
