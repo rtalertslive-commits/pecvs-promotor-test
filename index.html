@@ -2520,15 +2520,26 @@
                 return;
             }
 
+            const mesActual = document.getElementById('rpt-mes').value + ' ' + document.getElementById('rpt-year').value;
+
             const entrada = {
                 fecha: new Date().toISOString(),
-                mes: document.getElementById('rpt-mes').value + ' ' + document.getElementById('rpt-year').value,
+                mes: mesActual,
                 q1: q1_respuesta,
                 q2: q2_respuesta
             };
 
             if (!state.reclutamiento) state.reclutamiento = [];
-            state.reclutamiento.push(entrada);
+
+            // Verificar si ya existe respuesta para este mes
+            const idxExistente = state.reclutamiento.findIndex(e => e.mes === mesActual);
+            if (idxExistente >= 0) {
+                // Actualizar la existente
+                state.reclutamiento[idxExistente] = entrada;
+            } else {
+                // Agregar nueva
+                state.reclutamiento.push(entrada);
+            }
 
             await saveCoachData();
             loadReclutamiento();
