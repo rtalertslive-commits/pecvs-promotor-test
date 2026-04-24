@@ -1880,34 +1880,47 @@
         function refreshLeaderboardWeeks() {
             const mesFilter = document.getElementById('lb-mes-filter');
             const semFilter = document.getElementById('lb-sem-filter');
-            const selectedMes = mesFilter.value;
-
-            if (!selectedMes) {
-                // Si no hay mes seleccionado, mostrar opciones 1-6
-                semFilter.innerHTML = '<option value="">Todas las semanas</option>' +
-                    Array.from({length: 6}, (_, i) => `<option value="${i+1}">Semana ${i+1}</option>`).join('');
+            if (!mesFilter || !semFilter) {
+                console.log('[refreshLeaderboardWeeks] Filters not found');
                 return;
             }
+            const selectedMes = mesFilter.value || '';
+            const prevSem = semFilter.value;
 
-            // Extraer mes y año del valor seleccionado (formato: "Enero 2026")
-            const trimmedMes = selectedMes.trim();
-            const parts = trimmedMes.split(' ').filter(p => p.length > 0);
+            // Determinar el número de semanas a mostrar
+            let numWeeks = 6; // Por defecto 6 para cubrir el caso sin mes seleccionado
 
-            if (parts.length >= 2) {
-                const mesName = parts[0];
-                const year = parseInt(parts[parts.length - 1]);
-                const monthIndex = MONTHS_ES.indexOf(mesName);
+            if (selectedMes) {
+                // Parsear "Enero 2026" - el año es lo último, el mes es todo antes
+                const trimmed = selectedMes.trim();
+                const lastSpace = trimmed.lastIndexOf(' ');
+                if (lastSpace !== -1) {
+                    const mesName = trimmed.substring(0, lastSpace).trim();
+                    const yearStr = trimmed.substring(lastSpace + 1).trim();
+                    const year = parseInt(yearStr);
+                    const monthIndex = MONTHS_ES.indexOf(mesName);
 
-                if (monthIndex !== -1 && year) {
-                    const month = monthIndex + 1;
-                    const weeks = getMonthCalendar(year, month);
-                    const prevValue = semFilter.value;
-                    semFilter.innerHTML = '<option value="">Todas las semanas</option>' +
-                        weeks.map((_, i) => `<option value="${i+1}">Semana ${i+1}</option>`).join('');
-                    if (prevValue && parseInt(prevValue) <= weeks.length) {
-                        semFilter.value = prevValue;
+                    console.log('[refreshLeaderboardWeeks] selectedMes:', selectedMes, '| mesName:', mesName, '| year:', year, '| monthIndex:', monthIndex);
+
+                    if (monthIndex !== -1 && !isNaN(year)) {
+                        const month = monthIndex + 1;
+                        const weeks = getMonthCalendar(year, month);
+                        numWeeks = weeks.length;
+                        console.log('[refreshLeaderboardWeeks] ' + mesName + ' ' + year + ' tiene ' + numWeeks + ' semanas');
                     }
                 }
+            }
+
+            // Construir opciones
+            let html = '<option value="">Todas las semanas</option>';
+            for (let i = 1; i <= numWeeks; i++) {
+                html += '<option value="' + i + '">Semana ' + i + '</option>';
+            }
+            semFilter.innerHTML = html;
+
+            // Restaurar valor previo si es válido
+            if (prevSem && parseInt(prevSem) <= numWeeks) {
+                semFilter.value = prevSem;
             }
         }
 
