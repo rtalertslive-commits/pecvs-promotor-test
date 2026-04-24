@@ -1163,6 +1163,36 @@
                             class="fa fa-list"></i> Ver log (reportes)</button>
                 </div>
             </div>
+
+            <!-- SECCIÓN RECLUTAMIENTO -->
+            <div class="card" style="margin-top:20px;">
+                <p class="card-title"><i class="fa fa-people-group"></i> Reclutamiento</p>
+
+                <!-- Primera pregunta -->
+                <div style="margin-bottom:20px;">
+                    <label class="field-label">¿Actualmente tienes en entrenamiento algún prospecto a agente sin clave?</label>
+                    <div style="display:flex; gap:10px; margin-top:10px;">
+                        <button class="btn btn-sm" onclick="handleReclutamientoQ1('si')" id="btn-reclutamiento-si" style="flex:1;">Sí</button>
+                        <button class="btn btn-sm" onclick="handleReclutamientoQ1('no')" id="btn-reclutamiento-no" style="flex:1;">Todavía no</button>
+                    </div>
+                </div>
+
+                <!-- Segunda pregunta (oculta) -->
+                <div id="reclutamiento-q2" style="display:none; margin-bottom:20px;">
+                    <label class="field-label">¿Para cuando lo puedes formalizar a agente con clave?</label>
+                    <textarea id="reclutamiento-compromiso" rows="3"
+                        placeholder="Describe tu compromiso de formalización..."></textarea>
+                    <button class="btn btn-green btn-sm" onclick="saveReclutamiento()" style="margin-top:10px;">
+                        <i class="fa fa-floppy-disk"></i> Guardar respuesta
+                    </button>
+                </div>
+
+                <!-- Historial de respuestas -->
+                <div id="reclutamiento-historial" style="margin-top:20px;">
+                    <p class="field-label">Historial de respuestas</p>
+                    <div id="reclutamiento-lista" style="font-size:12px; color:var(--slate);"></div>
+                </div>
+            </div>
         </div>
 
     </div>
@@ -1381,6 +1411,7 @@
             renderKPIs();
             refreshMonthFilters();
             renderReporteHistory();
+            loadReclutamiento();
         }
 
         // ─── TABS ─────────────────────────────────────────────────────────────────────
@@ -2453,6 +2484,84 @@
       <span style="color:var(--slate);font-size:11px;">${new Date(r.fecha).toLocaleDateString('es-MX')}</span>
     </div>`).join('');
         }
+
+        // ─── RECLUTAMIENTO ─────────────────────────────────────────────────────────────
+        function handleReclutamientoQ1(respuesta) {
+            const q2Div = document.getElementById('reclutamiento-q2');
+            const compromiso = document.getElementById('reclutamiento-compromiso');
+
+            if (respuesta === 'si') {
+                q2Div.style.display = 'block';
+                compromiso.focus();
+            } else if (respuesta === 'no') {
+                q2Div.style.display = 'none';
+                compromiso.value = '';
+                // Guardar directamente sin respuesta a Q2
+                saveReclutamiento('no', '');
+            }
+        }
+
+        async function saveReclutamiento(q1_respuesta, q2_respuesta) {
+            // Determine Q1 response from buttons if not provided
+            if (!q1_respuesta) {
+                const btnSi = document.getElementById('btn-reclutamiento-si');
+                const btnNo = document.getElementById('btn-reclutamiento-no');
+                q1_respuesta = btnSi.style.opacity === '0.5' ? 'si' : 'no';
+            }
+
+            // Get Q2 response from textarea
+            if (q2_respuesta === undefined) {
+                q2_respuesta = document.getElementById('reclutamiento-compromiso').value;
+            }
+
+            // Validate
+            if (q1_respuesta === 'si' && !q2_respuesta.trim()) {
+                alert('Por favor ingresa tu compromiso');
+                return;
+            }
+
+            const entrada = {
+                fecha: new Date().toISOString(),
+                mes: document.getElementById('rpt-mes').value + ' ' + document.getElementById('rpt-year').value,
+                q1: q1_respuesta,
+                q2: q2_respuesta
+            };
+
+            if (!state.reclutamiento) state.reclutamiento = [];
+            state.reclutamiento.push(entrada);
+
+            await saveCoachData();
+            loadReclutamiento();
+
+            // Reset form
+            document.getElementById('reclutamiento-q2').style.display = 'none';
+            document.getElementById('reclutamiento-compromiso').value = '';
+            document.getElementById('btn-reclutamiento-si').style.opacity = '1';
+            document.getElementById('btn-reclutamiento-no').style.opacity = '1';
+        }
+
+        function loadReclutamiento() {
+            const historialDiv = document.getElementById('reclutamiento-lista');
+            const entries = (state.reclutamiento || []).slice().reverse();
+
+            if (!entries.length) {
+                historialDiv.innerHTML = '<div style="color:var(--slate);font-size:12px;">Sin respuestas aún.</div>';
+                return;
+            }
+
+            historialDiv.innerHTML = entries.map(e => {
+                const fecha = new Date(e.fecha).toLocaleDateString('es-MX');
+                const respuesta = e.q1 === 'si' ? `Sí - Compromiso: ${e.q2}` : 'Todavía no';
+                return `<div style="padding:8px; border-left:3px solid var(--gold); margin-bottom:8px;">
+                    <div style="font-weight:600;">${e.mes} (${fecha})</div>
+                    <div style="color:var(--slate);">${respuesta}</div>
+                </div>`;
+            }).join('');
+        }
+
+        window.handleReclutamientoQ1 = handleReclutamientoQ1;
+        window.saveReclutamiento = saveReclutamiento;
+        window.loadReclutamiento = loadReclutamiento;
 
         // ─── BOOT ─────────────────────────────────────────────────────────────────────
         window.addEventListener('beforeunload', function (e) {
