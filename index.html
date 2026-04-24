@@ -1106,10 +1106,11 @@
                         <div style="flex:1;">
                             <label class="field-label">Mes del reporte</label>
                             <select id="rpt-mes" onchange="tryLoadReporte()">
+                                <option value="">------</option>
                                 <option value="Enero">Enero</option>
                                 <option value="Febrero">Febrero</option>
                                 <option value="Marzo">Marzo</option>
-                                <option value="Abril" selected>Abril</option>
+                                <option value="Abril">Abril</option>
                                 <option value="Mayo">Mayo</option>
                                 <option value="Junio">Junio</option>
                                 <option value="Julio">Julio</option>
@@ -1122,7 +1123,7 @@
                         </div>
                         <div style="width:100px;">
                             <label class="field-label">Año</label>
-                            <input type="number" id="rpt-year" value="2026" min="2020" max="2040"
+                            <input type="number" id="rpt-year" placeholder="Año" min="2020" max="2040"
                                 onchange="tryLoadReporte()">
                         </div>
                     </div>
@@ -1182,9 +1183,6 @@
                     <label class="field-label">¿Para cuando lo puedes formalizar a agente con clave?</label>
                     <textarea id="reclutamiento-compromiso" rows="3"
                         placeholder="Describe tu compromiso de formalización..."></textarea>
-                    <button class="btn btn-green btn-sm" onclick="saveReclutamiento()" style="margin-top:10px;">
-                        <i class="fa fa-floppy-disk"></i> Guardar respuesta
-                    </button>
                 </div>
 
                 <!-- Historial de respuestas -->
@@ -2429,23 +2427,61 @@
         }
 
         async function saveReporte() {
-            const mes = document.getElementById('rpt-mes').value + ' ' + document.getElementById('rpt-year').value;
+            // Validar campos requeridos
+            const mesVal = document.getElementById('rpt-mes').value;
+            const yearVal = document.getElementById('rpt-year').value;
+            const analisis = document.getElementById('rpt-analisis').value.trim();
+            const fraude = document.getElementById('rpt-agentes').value.trim();
+            const compromisos = document.getElementById('rpt-compromisos').value.trim();
+
+            // Validar reclutamiento
+            const btnSi = document.getElementById('btn-reclutamiento-si');
+            const btnNo = document.getElementById('btn-reclutamiento-no');
+            const reclutamientoQ1 = btnSi.style.opacity === '0.5' ? 'si' : (btnNo.style.opacity === '0.5' ? 'no' : null);
+            const reclutamientoQ2 = document.getElementById('reclutamiento-compromiso').value.trim();
+
+            // Validaciones
+            if (!mesVal) { alert('Selecciona el mes del reporte'); return; }
+            if (!yearVal) { alert('Ingresa el año del reporte'); return; }
+            if (!analisis) { alert('Completa el análisis general del mes'); return; }
+            if (!fraude) { alert('Completa la sospecha de fraude en actividad'); return; }
+            if (!compromisos) { alert('Completa los compromisos del coach'); return; }
+            if (reclutamientoQ1 === null) { alert('Responde la primera pregunta de reclutamiento'); return; }
+            if (reclutamientoQ1 === 'si' && !reclutamientoQ2) { alert('Describe tu compromiso de formalización'); return; }
+
+            const mes = mesVal + ' ' + yearVal;
             const rpt = {
                 mes,
-                analisis: document.getElementById('rpt-analisis').value,
-                agentes: document.getElementById('rpt-agentes').value,
-                compromisos: document.getElementById('rpt-compromisos').value,
+                analisis,
+                agentes: fraude,
+                compromisos,
                 notas: document.getElementById('rpt-notas').value,
                 fecha: new Date().toISOString()
             };
+
+            // Guardar reporte de ventas
             if (!state.reportes) state.reportes = [];
             const idx = state.reportes.findIndex(r => r.mes === mes);
             if (idx >= 0) state.reportes[idx] = rpt; else state.reportes.push(rpt);
 
-            await saveState(); // This calls saveCoachData which includes reportes
+            // Guardar reclutamiento
+            const reclutamiento = {
+                fecha: new Date().toISOString(),
+                mes,
+                q1: reclutamientoQ1,
+                q2: reclutamientoQ2
+            };
+            if (!state.reclutamiento) state.reclutamiento = [];
+            const reclIdx = state.reclutamiento.findIndex(e => e.mes === mes);
+            if (reclIdx >= 0) state.reclutamiento[reclIdx] = reclutamiento; else state.reclutamiento.push(reclutamiento);
+
+            await saveCoachData();
             renderReporteHistory();
+            loadReclutamiento();
+
             const msg = document.getElementById('rpt-msg');
-            msg.style.display = 'inline-flex'; setTimeout(() => msg.style.display = 'none', 2500);
+            msg.style.display = 'inline-flex';
+            setTimeout(() => msg.style.display = 'none', 2500);
         }
 
         function deleteReporte() {
@@ -2489,15 +2525,21 @@
         function handleReclutamientoQ1(respuesta) {
             const q2Div = document.getElementById('reclutamiento-q2');
             const compromiso = document.getElementById('reclutamiento-compromiso');
+            const btnSi = document.getElementById('btn-reclutamiento-si');
+            const btnNo = document.getElementById('btn-reclutamiento-no');
+
+            // Reset button opacity
+            btnSi.style.opacity = '1';
+            btnNo.style.opacity = '1';
 
             if (respuesta === 'si') {
+                btnSi.style.opacity = '0.5';
                 q2Div.style.display = 'block';
                 compromiso.focus();
             } else if (respuesta === 'no') {
+                btnNo.style.opacity = '0.5';
                 q2Div.style.display = 'none';
                 compromiso.value = '';
-                // Guardar directamente sin respuesta a Q2
-                saveReclutamiento('no', '');
             }
         }
 
