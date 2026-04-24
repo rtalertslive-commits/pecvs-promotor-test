@@ -1180,7 +1180,7 @@
 
                 <!-- Primera pregunta -->
                 <div style="margin-bottom:20px;">
-                    <label class="field-label">¿Actualmente tienes en entrenamiento algún prospecto a agente sin clave?</label>
+                    <label class="field-label">¿Actualmente tienes en entrenamiento algún prospecto a agente que todavía no tenga clave?</label>
                     <div style="display:flex; gap:10px; margin-top:10px;">
                         <button class="btn btn-sm" onclick="handleReclutamientoQ1('si')" id="btn-reclutamiento-si" style="flex:1;">Sí</button>
                         <button class="btn btn-sm" onclick="handleReclutamientoQ1('no')" id="btn-reclutamiento-no" style="flex:1;">Todavía no</button>
@@ -1790,9 +1790,18 @@
         function initLeaderboardDefaults() {
             if (state.entries.length === 0) return;
 
-            // Find last month
+            // Find last month by sorting chronologically by year and month
             const mesesConDatos = [...new Set(state.entries.map(e => e.mes))];
-            const lastMes = mesesConDatos.sort().reverse()[0];
+            const lastMes = mesesConDatos.sort((a, b) => {
+                const [mesA, yearA] = a.split(' ');
+                const [mesB, yearB] = b.split(' ');
+                const monthA = MONTHS_ES.indexOf(mesA) + 1;
+                const monthB = MONTHS_ES.indexOf(mesB) + 1;
+                const yA = parseInt(yearA);
+                const yB = parseInt(yearB);
+                if (yA !== yB) return yA - yB;
+                return monthA - monthB;
+            }).reverse()[0];
             document.getElementById('lb-mes-filter').value = lastMes;
             refreshLeaderboardWeeks();
 
