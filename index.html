@@ -1067,10 +1067,9 @@
                     <input type="text" id="inp-coach" placeholder="Tu nombre">
                 </div>
                 <div>
-                    <label class="field-label">Código de Equipo (Para tus Coaches)</label>
+                    <label class="field-label">Tu Código de Promotor (compártelo con tus coaches)</label>
                     <input type="text" id="inp-teamcode" placeholder="Ej. TEAM-PROMOTOR-1">
-                    <p style="font-size:10px; color:var(--slate); margin-top:5px;">Comparte este código con tus coaches
-                        para que puedan vincularse a tu equipo.</p>
+                    <p style="font-size:10px; color:var(--slate); margin-top:5px;">Los coaches ingresan este código en su webapp para vincularse a ti.</p>
                 </div>
                 <input type="hidden" id="inp-promocode" value="">
                 <div>
@@ -1117,10 +1116,12 @@
         // agentCoachMap: { [agentName]: coachEmail } - used to derive coach from agent entries
         let state = {
             promoterName: '',
-            teamCode: '',
+            teamCode: '',      // code linking promoter → director (TEAM-DIRECTOR)
+            promotorCode: '',  // code promoter shares with coaches (TEAM-PROMOTOR-X)
+            promotorNum: null,
             agents: [],
             entries: [],
-            coaches: [],        // [{email, coachName, teamCode, reportes, reclutamiento}]
+            coaches: [],        // [{email, coachName, agentTeamCode, reportes, reclutamiento}]
             coachesMap: {},     // {email -> coach data}
             agentCoachMap: {}   // {agentName -> coachEmail}
         };
@@ -1174,9 +1175,12 @@
                 const data = docSnap.data();
                 state.promoterName = data.promoterName || data.coachName || user.displayName || '';
                 state.teamCode = data.teamCode || '';
+                state.promotorNum = data.promotorNum || null;
+                // promotorCode = what coaches use to link to this promoter
+                state.promotorCode = data.promotorCode || (state.promotorNum ? 'TEAM-PROMOTOR-' + state.promotorNum : '');
                 // Store the embedded coaches array as fallback (from hierarchy loader)
                 state.embeddedCoaches = Array.isArray(data.coaches) ? data.coaches : [];
-                document.getElementById('team-display').textContent = 'Equipo: ' + (state.teamCode || 'Sin Código');
+                document.getElementById('team-display').textContent = 'Mi código: ' + (state.promotorCode || state.teamCode || 'Sin Código');
                 startListeningCoaches();
             } else {
                 // First time promoter
@@ -1190,9 +1194,10 @@
             try {
                 await setDoc(doc(db, "promoters", user.email), {
                     promoterName: state.promoterName,
-                    teamCode: state.teamCode
+                    teamCode: state.teamCode,
+                    promotorCode: state.promotorCode
                 }, { merge: true });
-                document.getElementById('team-display').textContent = 'Equipo: ' + (state.teamCode || 'Sin Código');
+                document.getElementById('team-display').textContent = 'Mi código: ' + (state.promotorCode || state.teamCode || 'Sin Código');
             } catch (err) { console.error("Error saving promoter:", err); }
         }
 
@@ -1204,9 +1209,10 @@
         function startListeningCoaches() {
             stopAllListeners();
 
-            // Path A: query coaches by promotorTeamCode (if set on coach docs)
-            if (state.teamCode) {
-                const coachQ = query(collection(db, "coaches"), where("promotorTeamCode", "==", state.teamCode));
+            // Query coaches by promotorTeamCode = state.promotorCode (what coaches set when linking to this promoter)
+            const queryCode = state.promotorCode || state.teamCode;
+            if (queryCode) {
+                const coachQ = query(collection(db, "coaches"), where("promotorTeamCode", "==", queryCode));
                 const unsubCoaches = onSnapshot(coachQ, (snapshot) => {
                     let coaches = [];
                     const coachesMap = {};
@@ -1216,7 +1222,8 @@
                         const coachEntry = {
                             email: coachEmail,
                             coachName: cdata.coachName || coachEmail,
-                            teamCode: cdata.teamCode || ('TEAM-COACH-' + (cdata.coachNum || '')),
+                            // agentTeamCode = what agents have in their teamCode field
+                            agentTeamCode: resolveAgentTeamCode(cdata),
                             coachNum: cdata.coachNum,
                             reportes: cdata.reportes || [],
                             reclutamiento: cdata.reclutamiento || []
@@ -1225,7 +1232,6 @@
                         coachesMap[coachEmail] = coachEntry;
                     });
 
-                    // Fallback: if the query returned nothing but promoter has an embedded coaches array, use it
                     if (coaches.length === 0 && state.embeddedCoaches && state.embeddedCoaches.length > 0) {
                         loadCoachesFromEmbedded();
                         return;
@@ -1242,6 +1248,19 @@
             }
         }
 
+        // Derive the teamCode that agents use to link to this coach.
+        // The loader bug: saves coach's teamCode = TEAM-PROMOTOR-X instead of TEAM-COACH-X.
+        // Agents always use TEAM-COACH-{coachNum}. So if stored teamCode looks like a promotor
+        // code, fall back to TEAM-COACH-{coachNum}.
+        function resolveAgentTeamCode(cdata, fallbackCoachNum) {
+            const stored = cdata.teamCode || '';
+            const coachNum = cdata.coachNum || fallbackCoachNum || '';
+            if (!stored || stored.startsWith('TEAM-PROMOTOR-') || stored.startsWith('TEAM-DIRECTOR')) {
+                return coachNum ? 'TEAM-COACH-' + coachNum : '';
+            }
+            return stored;
+        }
+
         async function loadCoachesFromEmbedded() {
             const coaches = [];
             const coachesMap = {};
@@ -1253,7 +1272,7 @@
                         const entry = {
                             email: c.email,
                             coachName: cdata.coachName || c.name || c.email,
-                            teamCode: cdata.teamCode || ('TEAM-COACH-' + (cdata.coachNum || c.coachNum || '')),
+                            agentTeamCode: resolveAgentTeamCode(cdata, c.coachNum),
                             coachNum: cdata.coachNum || c.coachNum,
                             reportes: cdata.reportes || [],
                             reclutamiento: cdata.reclutamiento || []
@@ -1264,7 +1283,7 @@
                         const entry = {
                             email: c.email,
                             coachName: c.name || c.email,
-                            teamCode: 'TEAM-COACH-' + (c.coachNum || ''),
+                            agentTeamCode: 'TEAM-COACH-' + (c.coachNum || ''),
                             coachNum: c.coachNum,
                             reportes: [],
                             reclutamiento: []
@@ -1298,8 +1317,8 @@
             };
 
             state.coaches.forEach(coach => {
-                if (!coach.teamCode) return;
-                const agentQ = query(collection(db, "users"), where("teamCode", "==", coach.teamCode));
+                if (!coach.agentTeamCode) return;
+                const agentQ = query(collection(db, "users"), where("teamCode", "==", coach.agentTeamCode));
                 const unsub = onSnapshot(agentQ, (snapshot) => {
                     // Rebuild state per coach teamCode whenever there's a change
                     // Remove previous entries/agents from this coach
@@ -1378,8 +1397,8 @@
             const inpTeam = document.getElementById('inp-teamcode');
             const inpPromo = document.getElementById('inp-promocode');
             if (inpCoach) inpCoach.value = state.promoterName || '';
-            if (inpTeam) inpTeam.value = state.teamCode || '';
-            if (inpPromo) inpPromo.value = '';
+            if (inpTeam) inpTeam.value = state.promotorCode || '';
+            if (inpPromo) inpPromo.value = state.teamCode || '';
             renderCoachList();
             document.getElementById('config-modal').classList.add('open');
         }
@@ -1409,7 +1428,8 @@
                 }
 
                 state.promoterName = document.getElementById('inp-coach').value.trim();
-                state.teamCode = document.getElementById('inp-teamcode').value.trim();
+                state.promotorCode = document.getElementById('inp-teamcode').value.trim();
+                state.teamCode = document.getElementById('inp-promocode').value.trim() || state.teamCode;
 
                 await saveState();
                 startListeningCoaches();
