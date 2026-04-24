@@ -1005,12 +1005,6 @@
                             <option value="all">Todo el historial</option>
                         </select>
                     </div>
-                    <div>
-                        <label class="field-label">Mes (Opcional)</label>
-                        <select id="kpi-mes-sel" onchange="renderKPIs()">
-                            <option value="">Todos</option>
-                        </select>
-                    </div>
                 </div>
                 <div class="charts-grid">
                     <div class="chart-card full">
@@ -1755,13 +1749,10 @@
                 });
             });
 
-            ['lb-mes-filter', 'kpi-mes-sel'].forEach(id => {
-                const el = document.getElementById(id);
-                const cur = el.value;
-                const label = id === 'lb-mes-filter' ? 'Todos los meses' : 'Todos';
-                el.innerHTML = `<option value="">${label}</option>` + todosLosMeses;
-                if (mesesConDatos.includes(cur) || cur === '') el.value = cur;
-            });
+            const lbFilter = document.getElementById('lb-mes-filter');
+            const curLb = lbFilter.value;
+            lbFilter.innerHTML = '<option value="">Todos los meses</option>' + todosLosMeses;
+            if (mesesConDatos.includes(curLb) || curLb === '') lbFilter.value = curLb;
 
             // Set default leaderboard to last month and last week
             initLeaderboardDefaults();
@@ -1786,9 +1777,19 @@
         function initBitacoraDefaults() {
             if (state.entries.length === 0) return;
 
-            // Find last month
+            // Find last month by sorting by year and month
             const mesesConDatos = [...new Set(state.entries.map(e => e.mes))];
-            const lastMes = mesesConDatos.sort().reverse()[0];
+            const lastMes = mesesConDatos.sort((a, b) => {
+                const [mesA, yearA] = a.split(' ');
+                const [mesB, yearB] = b.split(' ');
+                const monthA = MONTHS_ES.indexOf(mesA) + 1;
+                const monthB = MONTHS_ES.indexOf(mesB) + 1;
+                const yA = parseInt(yearA);
+                const yB = parseInt(yearB);
+                if (yA !== yB) return yA - yB;
+                return monthA - monthB;
+            }).reverse()[0];
+
             const [mesName, year] = lastMes.split(' ');
             const monthIdx = MONTHS_ES.indexOf(mesName) + 1;
             document.getElementById('sel-month').value = monthIdx;
@@ -2197,12 +2198,6 @@
                 } else {
                     entries = state.entries;
                 }
-            }
-
-            // Apply optional month filter
-            const mesSel = document.getElementById('kpi-mes-sel').value;
-            if (mesSel) {
-                entries = entries.filter(e => e.mes === mesSel);
             }
 
             const agMap = {};
