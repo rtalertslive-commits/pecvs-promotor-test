@@ -1072,9 +1072,9 @@
                     <p style="font-size:10px; color:var(--slate); margin-top:5px;">Los coaches ingresan este código en su webapp para vincularse a ti.</p>
                 </div>
                 <div>
-                    <label class="field-label">Tu Código de Director (para el director)</label>
-                    <input type="text" id="inp-promocode" placeholder="Ej. TEAM-DIRECTOR" readonly>
-                    <p style="font-size:10px; color:var(--slate); margin-top:5px;">Tu director usa este código para verte en el sistema.</p>
+                    <label class="field-label">Código de tu Director</label>
+                    <input type="text" id="inp-directorcode" placeholder="Ej. TEAM-DIRECTOR">
+                    <p style="font-size:10px; color:var(--slate); margin-top:5px;">Ingresa el código de tu director para que pueda verte en su dashboard.</p>
                 </div>
                 <div>
                     <p class="section-label">Coaches en tu Equipo</p>
@@ -1182,6 +1182,8 @@
                 state.promotorNum = data.promotorNum || null;
                 // promotorCode = what coaches use to link to this promoter
                 state.promotorCode = data.promotorCode || (state.promotorNum ? 'TEAM-PROMOTOR-' + state.promotorNum : '');
+                // directorCode = what the promoter enters to link to their director
+                state.directorCode = data.directorCode || '';
                 // Store the embedded coaches array as fallback (from hierarchy loader)
                 state.embeddedCoaches = Array.isArray(data.coaches) ? data.coaches : [];
                 document.getElementById('team-display').textContent = 'Mi código: ' + (state.promotorCode || state.teamCode || 'Sin Código');
@@ -1199,7 +1201,8 @@
                 await setDoc(doc(db, "promoters", user.email), {
                     promoterName: state.promoterName,
                     teamCode: state.teamCode,
-                    promotorCode: state.promotorCode
+                    promotorCode: state.promotorCode,
+                    directorCode: state.directorCode
                 }, { merge: true });
                 document.getElementById('team-display').textContent = 'Mi código: ' + (state.promotorCode || state.teamCode || 'Sin Código');
             } catch (err) { console.error("Error saving promoter:", err); }
@@ -1396,11 +1399,11 @@
         window.openConfig = function () {
             const inpCoach = document.getElementById('inp-coach');
             const inpTeam = document.getElementById('inp-teamcode');
-            const inpPromo = document.getElementById('inp-promocode');
+            const inpDirCode = document.getElementById('inp-directorcode');
             if (inpCoach) inpCoach.value = state.promoterName || '';
             if (inpTeam) inpTeam.value = state.promotorCode || '';
-            // Show teamCode (director code) in 3rd field
-            if (inpPromo) inpPromo.value = state.teamCode || '';
+            // Show director code in 3rd field
+            if (inpDirCode) inpDirCode.value = state.directorCode || '';
             renderCoachList();
             document.getElementById('config-modal').classList.add('open');
         }
@@ -1430,7 +1433,8 @@
                 }
 
                 state.promoterName = document.getElementById('inp-coach').value.trim();
-                // Only update promoterName, codes are read-only (loaded from promoter doc)
+                state.directorCode = document.getElementById('inp-directorcode').value.trim();
+                // promotorCode is read-only (loaded from promoter doc)
 
                 await saveState();
                 startListeningCoaches();
