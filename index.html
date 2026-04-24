@@ -1791,24 +1791,34 @@
             if (state.entries.length === 0) return;
 
             // Find last month by sorting chronologically by year and month
-            const mesesConDatos = [...new Set(state.entries.map(e => e.mes))];
+            const mesesConDatos = [...new Set(state.entries.map(e => e.mes.trim()))];
             const lastMes = mesesConDatos.sort((a, b) => {
-                const [mesA, yearA] = a.split(' ');
-                const [mesB, yearB] = b.split(' ');
+                const partsA = a.split(' ').filter(p => p.length > 0);
+                const partsB = b.split(' ').filter(p => p.length > 0);
+                const mesA = partsA[0];
+                const yearA = parseInt(partsA[partsA.length - 1]);
+                const mesB = partsB[0];
+                const yearB = parseInt(partsB[partsB.length - 1]);
                 const monthA = MONTHS_ES.indexOf(mesA) + 1;
                 const monthB = MONTHS_ES.indexOf(mesB) + 1;
-                const yA = parseInt(yearA);
-                const yB = parseInt(yearB);
+                const yA = yearA || 0;
+                const yB = yearB || 0;
                 if (yA !== yB) return yA - yB;
                 return monthA - monthB;
             }).reverse()[0];
-            document.getElementById('lb-mes-filter').value = lastMes;
+
+            const lbFilter = document.getElementById('lb-mes-filter');
+            lbFilter.value = lastMes;
+
+            // Force refresh of weeks after setting the month
             refreshLeaderboardWeeks();
 
             // Find last week in that month
-            const entriesLastMes = state.entries.filter(e => e.mes === lastMes);
-            const lastWeek = Math.max(...entriesLastMes.map(e => parseInt(e.semana)));
-            document.getElementById('lb-sem-filter').value = lastWeek;
+            const entriesLastMes = state.entries.filter(e => e.mes.trim() === lastMes);
+            if (entriesLastMes.length > 0) {
+                const lastWeek = Math.max(...entriesLastMes.map(e => parseInt(e.semana)));
+                document.getElementById('lb-sem-filter').value = lastWeek;
+            }
         }
 
         function initBitacoraDefaults() {
@@ -1880,18 +1890,23 @@
             }
 
             // Extraer mes y año del valor seleccionado (formato: "Enero 2026")
-            const parts = selectedMes.split(' ');
-            const mesName = parts[0];
-            const year = parseInt(parts[1]);
-            const month = MONTHS_ES.indexOf(mesName) + 1;
+            const trimmedMes = selectedMes.trim();
+            const parts = trimmedMes.split(' ').filter(p => p.length > 0);
 
-            if (month && year) {
-                const weeks = getMonthCalendar(year, month);
-                const prevValue = semFilter.value;
-                semFilter.innerHTML = '<option value="">Todas las semanas</option>' +
-                    weeks.map((_, i) => `<option value="${i+1}">Semana ${i+1}</option>`).join('');
-                if (prevValue && parseInt(prevValue) <= weeks.length) {
-                    semFilter.value = prevValue;
+            if (parts.length >= 2) {
+                const mesName = parts[0];
+                const year = parseInt(parts[parts.length - 1]);
+                const monthIndex = MONTHS_ES.indexOf(mesName);
+
+                if (monthIndex !== -1 && year) {
+                    const month = monthIndex + 1;
+                    const weeks = getMonthCalendar(year, month);
+                    const prevValue = semFilter.value;
+                    semFilter.innerHTML = '<option value="">Todas las semanas</option>' +
+                        weeks.map((_, i) => `<option value="${i+1}">Semana ${i+1}</option>`).join('');
+                    if (prevValue && parseInt(prevValue) <= weeks.length) {
+                        semFilter.value = prevValue;
+                    }
                 }
             }
         }
