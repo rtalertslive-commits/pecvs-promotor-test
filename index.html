@@ -915,7 +915,7 @@
                 <div class="lb-filters">
                     <div>
                         <label class="field-label">Filtrar por mes</label>
-                        <select id="lb-mes-filter" onchange="renderLeaderboard()">
+                        <select id="lb-mes-filter" onchange="refreshLeaderboardWeeks(); renderLeaderboard()">
                             <option value="">Todos los meses</option>
                         </select>
                     </div>
@@ -928,6 +928,7 @@
                             <option value="3">Semana 3</option>
                             <option value="4">Semana 4</option>
                             <option value="5">Semana 5</option>
+                            <option value="6">Semana 6</option>
                         </select>
                     </div>
                     <div style="margin-top:18px;">
@@ -1775,6 +1776,35 @@
             }
             if (d.S > 0 && d.prima < 1) errors.push("Debe ingresar Prima ($) si hay solicitudes");
             return { ok: errors.length === 0, errors };
+        }
+
+        function refreshLeaderboardWeeks() {
+            const mesFilter = document.getElementById('lb-mes-filter');
+            const semFilter = document.getElementById('lb-sem-filter');
+            const selectedMes = mesFilter.value;
+
+            if (!selectedMes) {
+                // Si no hay mes seleccionado, mostrar opciones 1-6
+                semFilter.innerHTML = '<option value="">Todas las semanas</option>' +
+                    Array.from({length: 6}, (_, i) => `<option value="${i+1}">Semana ${i+1}</option>`).join('');
+                return;
+            }
+
+            // Extraer mes y año del valor seleccionado (formato: "Enero 2026")
+            const parts = selectedMes.split(' ');
+            const mesName = parts[0];
+            const year = parseInt(parts[1]);
+            const month = MONTHS_ES.indexOf(mesName) + 1;
+
+            if (month && year) {
+                const weeks = getMonthCalendar(year, month);
+                const prevValue = semFilter.value;
+                semFilter.innerHTML = '<option value="">Todas las semanas</option>' +
+                    weeks.map((_, i) => `<option value="${i+1}">Semana ${i+1}</option>`).join('');
+                if (prevValue && parseInt(prevValue) <= weeks.length) {
+                    semFilter.value = prevValue;
+                }
+            }
         }
 
         function renderLeaderboard() {
