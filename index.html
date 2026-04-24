@@ -998,10 +998,10 @@
                     <div>
                         <label class="field-label">Período</label>
                         <select id="kpi-period-sel" onchange="renderKPIs()">
-                            <option value="12m">Últimos 12 meses</option>
+                            <option value="1m">Último mes</option>
                             <option value="3m">Últimos 3 meses</option>
                             <option value="6m">Últimos 6 meses</option>
-                            <option value="1y">Este año</option>
+                            <option value="12m">Últimos 12 meses</option>
                             <option value="all">Todo el historial</option>
                         </select>
                     </div>
@@ -1074,7 +1074,6 @@
                             <option value="12m">Últimos 12 meses</option>
                             <option value="3m">Últimos 3 meses</option>
                             <option value="6m">Últimos 6 meses</option>
-                            <option value="1y">Este año</option>
                             <option value="all">Todo el historial</option>
                         </select>
                     </div>
@@ -1766,6 +1765,7 @@
 
             // Set default leaderboard to last month and last week
             initLeaderboardDefaults();
+            initBitacoraDefaults();
         }
 
         function initLeaderboardDefaults() {
@@ -1781,6 +1781,24 @@
             const entriesLastMes = state.entries.filter(e => e.mes === lastMes);
             const lastWeek = Math.max(...entriesLastMes.map(e => parseInt(e.semana)));
             document.getElementById('lb-sem-filter').value = lastWeek;
+        }
+
+        function initBitacoraDefaults() {
+            if (state.entries.length === 0) return;
+
+            // Find last month
+            const mesesConDatos = [...new Set(state.entries.map(e => e.mes))];
+            const lastMes = mesesConDatos.sort().reverse()[0];
+            const [mesName, year] = lastMes.split(' ');
+            const monthIdx = MONTHS_ES.indexOf(mesName) + 1;
+            document.getElementById('sel-month').value = monthIdx;
+            updateBitacoraCalendar();
+
+            // Find last week in that month
+            const entriesLastMes = state.entries.filter(e => e.mes === lastMes);
+            const lastWeek = Math.max(...entriesLastMes.map(e => parseInt(e.semana)));
+            document.getElementById('sel-semana').value = lastWeek;
+            updateWeekTable();
         }
 
         // ─── LEADERBOARD ──────────────────────────────────────────────────────────────
@@ -1979,7 +1997,7 @@
 
             let filtered = state.entries;
             if (latestDate) {
-                if (period === '12m' || period === '1y') {
+                if (period === '12m') {
                     const last12Months = new Date(latestDate.getFullYear(), latestDate.getMonth() - 11, 1);
                     filtered = state.entries.filter(e => {
                         const [mes, year] = e.mes.split(' ');
@@ -2144,13 +2162,13 @@
             if (!latestDate) {
                 entries = state.entries;
             } else {
-                if (period === '12m' || period === '1y') {
-                    const last12Months = new Date(latestDate.getFullYear(), latestDate.getMonth() - 11, 1);
+                if (period === '1m') {
+                    const last1Month = new Date(latestDate.getFullYear(), latestDate.getMonth(), 1);
                     entries = state.entries.filter(e => {
                         const [mes, year] = e.mes.split(' ');
                         const monthIdx = MONTHS_ES.indexOf(mes) + 1;
                         const entryDate = new Date(parseInt(year), monthIdx - 1, 1);
-                        return entryDate >= last12Months;
+                        return entryDate >= last1Month;
                     });
                 } else if (period === '3m') {
                     const last3Months = new Date(latestDate.getFullYear(), latestDate.getMonth() - 2, 1);
@@ -2167,6 +2185,14 @@
                         const monthIdx = MONTHS_ES.indexOf(mes) + 1;
                         const entryDate = new Date(parseInt(year), monthIdx - 1, 1);
                         return entryDate >= last6Months;
+                    });
+                } else if (period === '12m') {
+                    const last12Months = new Date(latestDate.getFullYear(), latestDate.getMonth() - 11, 1);
+                    entries = state.entries.filter(e => {
+                        const [mes, year] = e.mes.split(' ');
+                        const monthIdx = MONTHS_ES.indexOf(mes) + 1;
+                        const entryDate = new Date(parseInt(year), monthIdx - 1, 1);
+                        return entryDate >= last12Months;
                     });
                 } else {
                     entries = state.entries;
