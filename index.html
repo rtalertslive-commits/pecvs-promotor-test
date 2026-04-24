@@ -1068,10 +1068,14 @@
                 </div>
                 <div>
                     <label class="field-label">Tu Código de Promotor (compártelo con tus coaches)</label>
-                    <input type="text" id="inp-teamcode" placeholder="Ej. TEAM-PROMOTOR-1">
+                    <input type="text" id="inp-teamcode" placeholder="Ej. TEAM-PROMOTOR-1" readonly>
                     <p style="font-size:10px; color:var(--slate); margin-top:5px;">Los coaches ingresan este código en su webapp para vincularse a ti.</p>
                 </div>
-                <input type="hidden" id="inp-promocode" value="">
+                <div>
+                    <label class="field-label">Tu Código de Director (para el director)</label>
+                    <input type="text" id="inp-promocode" placeholder="Ej. TEAM-DIRECTOR" readonly>
+                    <p style="font-size:10px; color:var(--slate); margin-top:5px;">Tu director usa este código para verte en el sistema.</p>
+                </div>
                 <div>
                     <p class="section-label">Coaches en tu Equipo</p>
                     <div class="agent-list" id="agent-list"></div>
@@ -1209,42 +1213,39 @@
         function startListeningCoaches() {
             stopAllListeners();
 
-            // Query coaches by promotorTeamCode = state.promotorCode (what coaches set when linking to this promoter)
-            const queryCode = state.promotorCode || state.teamCode;
-            if (queryCode) {
-                const coachQ = query(collection(db, "coaches"), where("promotorTeamCode", "==", queryCode));
-                const unsubCoaches = onSnapshot(coachQ, (snapshot) => {
-                    let coaches = [];
-                    const coachesMap = {};
-                    snapshot.forEach((docSnap) => {
-                        const cdata = docSnap.data();
-                        const coachEmail = docSnap.id;
-                        const coachEntry = {
-                            email: coachEmail,
-                            coachName: cdata.coachName || coachEmail,
-                            // agentTeamCode = what agents have in their teamCode field
-                            agentTeamCode: resolveAgentTeamCode(cdata),
-                            coachNum: cdata.coachNum,
-                            reportes: cdata.reportes || [],
-                            reclutamiento: cdata.reclutamiento || []
-                        };
-                        coaches.push(coachEntry);
-                        coachesMap[coachEmail] = coachEntry;
-                    });
-
-                    if (coaches.length === 0 && state.embeddedCoaches && state.embeddedCoaches.length > 0) {
-                        loadCoachesFromEmbedded();
-                        return;
-                    }
-
-                    state.coaches = coaches;
-                    state.coachesMap = coachesMap;
-                    startListeningAgentsForCoaches();
-                    refreshAll();
-                });
-                unsubListeners.push(unsubCoaches);
-            } else if (state.embeddedCoaches && state.embeddedCoaches.length > 0) {
+            // Prefer embedded coaches array from promoter doc (most reliable source of truth)
+            if (state.embeddedCoaches && state.embeddedCoaches.length > 0) {
                 loadCoachesFromEmbedded();
+            } else {
+                // Fallback: query coaches by promotorTeamCode
+                const queryCode = state.promotorCode || state.teamCode;
+                if (queryCode) {
+                    const coachQ = query(collection(db, "coaches"), where("promotorTeamCode", "==", queryCode));
+                    const unsubCoaches = onSnapshot(coachQ, (snapshot) => {
+                        let coaches = [];
+                        const coachesMap = {};
+                        snapshot.forEach((docSnap) => {
+                            const cdata = docSnap.data();
+                            const coachEmail = docSnap.id;
+                            const coachEntry = {
+                                email: coachEmail,
+                                coachName: cdata.coachName || coachEmail,
+                                agentTeamCode: resolveAgentTeamCode(cdata),
+                                coachNum: cdata.coachNum,
+                                reportes: cdata.reportes || [],
+                                reclutamiento: cdata.reclutamiento || []
+                            };
+                            coaches.push(coachEntry);
+                            coachesMap[coachEmail] = coachEntry;
+                        });
+
+                        state.coaches = coaches;
+                        state.coachesMap = coachesMap;
+                        startListeningAgentsForCoaches();
+                        refreshAll();
+                    });
+                    unsubListeners.push(unsubCoaches);
+                }
             }
         }
 
@@ -1398,6 +1399,7 @@
             const inpPromo = document.getElementById('inp-promocode');
             if (inpCoach) inpCoach.value = state.promoterName || '';
             if (inpTeam) inpTeam.value = state.promotorCode || '';
+            // Show teamCode (director code) in 3rd field
             if (inpPromo) inpPromo.value = state.teamCode || '';
             renderCoachList();
             document.getElementById('config-modal').classList.add('open');
@@ -1428,8 +1430,7 @@
                 }
 
                 state.promoterName = document.getElementById('inp-coach').value.trim();
-                state.promotorCode = document.getElementById('inp-teamcode').value.trim();
-                state.teamCode = document.getElementById('inp-promocode').value.trim() || state.teamCode;
+                // Only update promoterName, codes are read-only (loaded from promoter doc)
 
                 await saveState();
                 startListeningCoaches();
