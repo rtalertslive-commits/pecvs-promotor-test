@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PECVS$ — Coach Analytics v1.3.7</title>
+    <title>PECVS$ — Promotor Analytics v1.3.7</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link
         href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@700&display=swap"
@@ -800,7 +800,7 @@
                 <h1><i class="fa-solid fa-chart-line" style="font-size:22px;margin-right:10px;"></i>PECVS$ Analytics
                     <small style="font-size:10px; color:var(--slate);">v1.3.7</small>
                 </h1>
-                <p id="coach-display">Coach: —</p>
+                <p id="coach-display">Promotor: —</p>
                 <p id="team-display" style="font-size:10px; color:var(--gold); font-weight:700;">Equipo: Sin Código</p>
             </div>
             <div class="header-right">
@@ -812,117 +812,25 @@
 
         <!-- TAB NAV -->
         <div class="tab-nav">
-            <button class="tab-btn active" onclick="switchTab('bitacora',this)"><i class="fa fa-book-open"></i>
-                Bitácora</button>
-            <button class="tab-btn" onclick="switchTab('leaderboard',this)"><i class="fa fa-table"></i> Leaderboard /
+            <button class="tab-btn active" onclick="switchTab('leaderboard',this)"><i class="fa fa-table"></i> Leaderboard /
                 Ratios</button>
             <button class="tab-btn" onclick="switchTab('kpis',this)"><i class="fa fa-chart-column"></i>
                 KPIs (Barras)</button>
             <button class="tab-btn" onclick="switchTab('charts',this)"><i class="fa fa-chart-area"></i>
                 Tendencias</button>
-            <button class="tab-btn" onclick="switchTab('reporte',this)"><i class="fa fa-file-lines"></i> Reporte
-                Mensual</button>
-        </div>
-
-        <!-- ═══════════════════════════════ TAB: BITÁCORA ═══════════════════════════════ -->
-        <div id="tab-bitacora" class="tab-panel active">
-            <div class="card">
-                <p class="card-title"><i class="fa fa-pen-to-square"></i> Registro Semanal de Actividad</p>
-                <div class="info-box">
-                    <strong>Embudo PECVS$:</strong> P ≥ E ≥ C ≥ V &nbsp;|&nbsp;
-                    P=Contactos · E=Entrevistas · C=Cotizaciones · V=Cierres · S=Solicitudes · $=Prima Neta
-                </div>
-                <div class="bitacora-header">
-                    <div>
-                        <label class="field-label">Agente</label>
-                        <select id="sel-agent" onchange="autoLoadBitacora()">
-                            <option value="">— Selecciona agente —</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="field-label">Mes</label>
-                        <select id="sel-month" onchange="updateBitacoraCalendar()">
-                            <option value="1">Enero</option>
-                            <option value="2">Febrero</option>
-                            <option value="3">Marzo</option>
-                            <option value="4" selected>Abril</option>
-                            <option value="5">Mayo</option>
-                            <option value="6">Junio</option>
-                            <option value="7">Julio</option>
-                            <option value="8">Agosto</option>
-                            <option value="9">Septiembre</option>
-                            <option value="10">Octubre</option>
-                            <option value="11">Noviembre</option>
-                            <option value="12">Diciembre</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="field-label">Año</label>
-                        <input type="number" id="inp-year" value="2026" min="2020" max="2040"
-                            onchange="updateBitacoraCalendar()" style="width:100px;">
-                    </div>
-                    <div>
-                        <label class="field-label">Semana</label>
-                        <select id="sel-semana" onchange="updateWeekTable()"></select>
-                    </div>
-                    <!-- Manual load button removed per user request -->
-                </div>
-                <div id="week-info" style="font-size:11px;color:var(--teal);margin-bottom:10px;"></div>
-
-                <table class="week-table">
-                    <thead>
-                        <tr>
-                            <th>Día</th>
-                            <th>P — Contactos</th>
-                            <th>E — Entrevistas</th>
-                            <th>C — Cotizaciones</th>
-                            <th>V — Cierres</th>
-                            <th>S — Solicitudes</th>
-                            <th>$ — Prima Neta</th>
-                            <th>Semáforo</th>
-                        </tr>
-                    </thead>
-                    <tbody id="week-body"></tbody>
-                    <tfoot>
-                        <tr>
-                            <td class="day-label">TOTAL SEM</td>
-                            <td class="total-cell" id="tt-P">0</td>
-                            <td class="total-cell" id="tt-E">0</td>
-                            <td class="total-cell" id="tt-C">0</td>
-                            <td class="total-cell" id="tt-V">0</td>
-                            <td class="total-cell" id="tt-S">0</td>
-                            <td class="total-cell" id="tt-$">$0</td>
-                            <td></td>
-                        </tr>
-                        <tr>
-                            <td class="day-label">TOTAL MES</td>
-                            <td class="total-cell" id="ttm-P">0</td>
-                            <td class="total-cell" id="ttm-E">0</td>
-                            <td class="total-cell" id="ttm-C">0</td>
-                            <td class="total-cell" id="ttm-V">0</td>
-                            <td class="total-cell" id="ttm-S">0</td>
-                            <td class="total-cell" id="ttm-$">$0</td>
-                            <td></td>
-                        </tr>
-                    </tfoot>
-                </table>
-
-                <div class="save-row">
-                    <button class="btn" onclick="clearForm(true)"><i class="fa fa-eraser"></i>Borrar tabla y reiniciar
-                        semana a cero</button>
-                    <span id="save-msg" style="font-size:12px;color:var(--green);display:none;"><i
-                            class="fa fa-check"></i> Guardado</span>
-                    <button class="btn btn-sm"
-                        onclick="document.getElementById('modal-bitacora-log').classList.add('open')"
-                        style="margin-left:auto;"><i class="fa fa-list"></i> Ver log (registros completos)</button>
-                </div>
-            </div>
+            <button class="tab-btn" onclick="switchTab('reporte',this)"><i class="fa fa-file-lines"></i> Reportes de Coaches</button>
         </div>
 
         <!-- ═══════════════════════════════ TAB: LEADERBOARD ═══════════════════════════════ -->
-        <div id="tab-leaderboard" class="tab-panel">
+        <div id="tab-leaderboard" class="tab-panel active">
             <div class="card">
                 <div class="lb-filters">
+                    <div>
+                        <label class="field-label">Equipo Coach</label>
+                        <select id="lb-coach-filter" onchange="renderLeaderboard()">
+                            <option value="">Todos los coaches</option>
+                        </select>
+                    </div>
                     <div>
                         <label class="field-label">Filtrar por mes</label>
                         <select id="lb-mes-filter" onchange="refreshLeaderboardWeeks(); renderLeaderboard()">
@@ -943,7 +851,7 @@
                     </div>
                     <div style="margin-top:18px;">
                         <button class="btn btn-sm"
-                            onclick="lb_mes_filter.value='';lb_sem_filter.value='';renderLeaderboard()"><i
+                            onclick="lb_coach_filter.value='';lb_mes_filter.value='';lb_sem_filter.value='';renderLeaderboard()"><i
                                 class="fa fa-filter-circle-xmark"></i>Quitar filtros</button>
                         <button id="btn-tog-red" class="btn btn-sm" onclick="toggleRed()">
                             <i class="fa fa-eye"></i> Ver Conciliación Real
@@ -1006,6 +914,12 @@
             <div class="card">
                 <div class="charts-controls">
                     <div>
+                        <label class="field-label">Equipo Coach</label>
+                        <select id="kpi-coach-sel" onchange="renderKPIs()">
+                            <option value="">Todos los coaches</option>
+                        </select>
+                    </div>
+                    <div>
                         <label class="field-label">Período</label>
                         <select id="kpi-period-sel" onchange="renderKPIs()">
                             <option value="1m">Último mes</option>
@@ -1067,6 +981,12 @@
             <div class="card">
                 <div class="charts-controls">
                     <div>
+                        <label class="field-label">Equipo Coach</label>
+                        <select id="chart-coach-sel" onchange="refreshChartAgents(); renderCharts()">
+                            <option value="">Todos los coaches</option>
+                        </select>
+                    </div>
+                    <div>
                         <label class="field-label">Agente</label>
                         <select id="chart-agent-sel" onchange="renderCharts()">
                             <option value="__all__">Todos (Total equipo)</option>
@@ -1107,149 +1027,33 @@
             </div>
         </div>
 
-        <!-- ═══════════════════ TAB: REPORTE VENTAS ═══════════════════ -->
+        <!-- ═══════════════════ TAB: REPORTES DE COACHES ═══════════════════ -->
         <div id="tab-reporte" class="tab-panel">
             <div class="card">
-                <p class="card-title"><i class="fa fa-file-lines"></i> Reporte Ventas</p>
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px;">
-                    <div style="display:flex;gap:8px;">
-                        <div style="flex:1;">
-                            <label class="field-label">Mes del reporte</label>
-                            <select id="rpt-mes" onchange="tryLoadReporte()">
-                                <option value="">------</option>
-                                <option value="Enero">Enero</option>
-                                <option value="Febrero">Febrero</option>
-                                <option value="Marzo">Marzo</option>
-                                <option value="Abril">Abril</option>
-                                <option value="Mayo">Mayo</option>
-                                <option value="Junio">Junio</option>
-                                <option value="Julio">Julio</option>
-                                <option value="Agosto">Agosto</option>
-                                <option value="Septiembre">Septiembre</option>
-                                <option value="Octubre">Octubre</option>
-                                <option value="Noviembre">Noviembre</option>
-                                <option value="Diciembre">Diciembre</option>
-                            </select>
-                        </div>
-                        <div style="width:100px;">
-                            <label class="field-label">Año</label>
-                            <select id="rpt-year" onchange="tryLoadReporte()">
-                                <option value="">------</option>
-                                <option value="2026">2026</option>
-                                <option value="2027">2027</option>
-                                <option value="2028">2028</option>
-                                <option value="2029">2029</option>
-                                <option value="2030">2030</option>
-                                <option value="2031">2031</option>
-                                <option value="2032">2032</option>
-                                <option value="2033">2033</option>
-                                <option value="2034">2034</option>
-                                <option value="2035">2035</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div style="display:flex;align-items:flex-end;gap:8px;">
-                        <button class="btn btn-green" onclick="saveReporte()"><i class="fa fa-floppy-disk"></i>Guardar
-                            reporte</button>
-                    </div>
-                </div>
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+                <p class="card-title"><i class="fa fa-file-lines"></i> Reportes de Coaches</p>
+                <p style="font-size:12px;color:var(--slate);margin-bottom:15px;">
+                    Visualiza los reportes mensuales enviados por los coaches de tu equipo, incluyendo análisis, fraude, compromisos y reclutamiento.
+                </p>
+                <div class="charts-controls" style="margin-bottom:20px;">
                     <div>
-                        <label class="field-label">Análisis general del mes</label>
-                        <textarea id="rpt-analisis" rows="6"
-                            placeholder="Describe el desempeño general del equipo este mes..."></textarea>
+                        <label class="field-label">Equipo Coach</label>
+                        <select id="rpt-coach-filter" onchange="renderCoachReportes()">
+                            <option value="">Todos los coaches</option>
+                        </select>
                     </div>
                     <div>
-                        <label class="field-label">Sospecha de fraude en actividad</label>
-                        <textarea id="rpt-agentes" rows="6"
-                            placeholder="¿Crees que algún agente infló actividad (para aparentar hacer más de lo que realmente hizo)? ¿O desinfló actividad (para aparentar ser más efectivo)? Descríbelo aquí."></textarea>
-                    </div>
-                    <div>
-                        <label class="field-label">Compromisos del coach para el siguiente mes</label>
-                        <textarea id="rpt-compromisos" rows="5"
-                            placeholder="¿Qué harás diferente? ¿Qué apoyo darás a tu equipo?"></textarea>
-                    </div>
-                    <div>
-                        <label class="field-label">Notas adicionales</label>
-                        <textarea id="rpt-notas" rows="5"
-                            placeholder="Cualquier otra observación relevante..."></textarea>
+                        <label class="field-label">Mes</label>
+                        <select id="rpt-mes-filter" onchange="renderCoachReportes()">
+                            <option value="">Todos los meses</option>
+                        </select>
                     </div>
                 </div>
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px;">
-                    <span id="rpt-msg" style="font-size:12px;color:var(--green);display:none;"><i
-                            class="fa fa-check"></i> Reporte guardado</span>
-                    <button class="btn btn-sm"
-                        onclick="document.getElementById('modal-reporte-log').classList.add('open')"><i
-                            class="fa fa-list"></i> Ver log (reportes)</button>
-                </div>
-            </div>
-
-            <!-- SECCIÓN RECLUTAMIENTO -->
-            <div class="card" style="margin-top:20px;">
-                <p class="card-title"><i class="fa fa-people-group"></i> Reclutamiento</p>
-
-                <!-- Primera pregunta -->
-                <div style="margin-bottom:20px;">
-                    <label class="field-label">¿Actualmente tienes en entrenamiento algún prospecto a agente que todavía no tenga clave?</label>
-                    <div style="display:flex; gap:10px; margin-top:10px;">
-                        <button class="btn btn-sm" onclick="handleReclutamientoQ1('si')" id="btn-reclutamiento-si" style="flex:1;">Sí</button>
-                        <button class="btn btn-sm" onclick="handleReclutamientoQ1('no')" id="btn-reclutamiento-no" style="flex:1;">Todavía no</button>
-                    </div>
-                </div>
-
-                <!-- Segunda pregunta (oculta) -->
-                <div id="reclutamiento-q2" style="display:none; margin-bottom:20px;">
-                    <label class="field-label">¿Cuántos tienes a tu cargo?</label>
-                    <input type="number" id="reclutamiento-cantidad" min="0" max="10" placeholder="Cantidad de prospectos" style="width:100%; padding:8px; border:1px solid var(--slate); border-radius:4px; background:var(--dark-bg); color:var(--light);">
-                </div>
-
-                <!-- Tercera pregunta (oculta) -->
-                <div id="reclutamiento-q3" style="display:none; margin-bottom:20px;">
-                    <label class="field-label">¿Cómo se llama(n)?</label>
-                    <textarea id="reclutamiento-nombres" rows="3"
-                        placeholder="Escribe los nombres separados por comas..."></textarea>
-                </div>
-
-                <!-- Cuarta pregunta (oculta) -->
-                <div id="reclutamiento-q4" style="display:none; margin-bottom:20px;">
-                    <label class="field-label">¿Para cuando lo puedes formalizar a agente con clave?</label>
-                    <textarea id="reclutamiento-compromiso" rows="3"
-                        placeholder="Describe tu compromiso de formalización..."></textarea>
-                </div>
-
-                <!-- Historial de respuestas -->
-                <div id="reclutamiento-historial" style="margin-top:20px;">
-                    <p class="field-label">Historial de respuestas</p>
-                    <div id="reclutamiento-lista" style="font-size:12px; color:var(--slate);"></div>
+                <div id="coach-reportes-list" style="display:flex;flex-direction:column;gap:16px;">
+                    <div class="empty-state"><i class="fa fa-inbox"></i>Cargando reportes...</div>
                 </div>
             </div>
         </div>
 
-    </div>
-
-    <!-- LOG BITACORA MODAL -->
-    <div class="modal-overlay" id="modal-bitacora-log">
-        <div class="modal-box">
-            <button class="modal-close"
-                onclick="document.getElementById('modal-bitacora-log').classList.remove('open')">&times;</button>
-            <h2><i class="fa fa-clock-rotate-left"></i> Log de Transacciones (Bitácora)</h2>
-            <div class="history-grid" id="history-grid" style="margin-top:16px;">
-                <div class="empty-state"><i class="fa fa-inbox"></i>No hay entradas aún. Llena y guarda la bitácora.
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- LOG REPORTE MODAL -->
-    <div class="modal-overlay" id="modal-reporte-log">
-        <div class="modal-box">
-            <button class="modal-close"
-                onclick="document.getElementById('modal-reporte-log').classList.remove('open')">&times;</button>
-            <h2><i class="fa fa-folder-open"></i> Log de Reportes Mensuales</h2>
-            <div id="rpt-history" class="history-grid" style="margin-top:16px;">
-                <div class="empty-state"><i class="fa fa-inbox"></i>No hay reportes guardados aún.</div>
-            </div>
-        </div>
     </div>
 
     <!-- CONFIG MODAL -->
@@ -1259,25 +1063,20 @@
             <h2><i class="fa fa-cog"></i> Configuración</h2>
             <div style="display:flex;flex-direction:column;gap:20px;">
                 <div>
-                    <label class="field-label">Nombre del Coach</label>
+                    <label class="field-label">Nombre del Promotor</label>
                     <input type="text" id="inp-coach" placeholder="Tu nombre">
                 </div>
                 <div>
-                    <label class="field-label">Código de Equipo (Para tus Agentes)</label>
-                    <input type="text" id="inp-teamcode" placeholder="Ej. EQUIPO-FRANCO">
-                    <p style="font-size:10px; color:var(--slate); margin-top:5px;">Comparte este código con tus agentes
-                        para que puedan vincularse.</p>
+                    <label class="field-label">Código de Equipo (Para tus Coaches)</label>
+                    <input type="text" id="inp-teamcode" placeholder="Ej. TEAM-PROMOTOR-1">
+                    <p style="font-size:10px; color:var(--slate); margin-top:5px;">Comparte este código con tus coaches
+                        para que puedan vincularse a tu equipo.</p>
                 </div>
+                <input type="hidden" id="inp-promocode" value="">
                 <div>
-                    <label class="field-label">Código de Promotor (Opcional)</label>
-                    <input type="text" id="inp-promocode" placeholder="Ej. PROMOTOR-XYZ">
-                    <p style="font-size:10px; color:var(--slate); margin-top:5px;">Ingresa el código de tu promotor para
-                        que pueda ver tus KPIs y reportes.</p>
-                </div>
-                <div>
-                    <p class="section-label">Agentes en tu Equipo</p>
+                    <p class="section-label">Coaches en tu Equipo</p>
                     <div class="agent-list" id="agent-list"></div>
-                    <p style="font-size:10px; color:var(--slate); margin-top:5px;">Los agentes que ingresen tu código
+                    <p style="font-size:10px; color:var(--slate); margin-top:5px;">Los coaches que ingresen tu código
                         aparecerán aquí automáticamente.</p>
                 </div>
                 <button class="btn btn-green" onclick="saveConfig()"><i class="fa fa-floppy-disk"></i>Guardar
@@ -1313,10 +1112,20 @@
         const COLS = ['P', 'E', 'C', 'V', 'S'];
         const MONTHS_ES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
 
-        let state = { coachName: '', teamCode: '', promotorCode: '', agents: [], entries: [], reportes: [] };
+        // state for Promoter: tracks promoter info, all coaches under them, their agents and entries
+        // coachesMap: { [coachEmail]: { coachName, teamCode, agents: [names], reportes: [], reclutamiento: [] } }
+        // agentCoachMap: { [agentName]: coachEmail } - used to derive coach from agent entries
+        let state = {
+            promoterName: '',
+            teamCode: '',
+            agents: [],
+            entries: [],
+            coaches: [],        // [{email, coachName, teamCode, reportes, reclutamiento}]
+            coachesMap: {},     // {email -> coach data}
+            agentCoachMap: {}   // {agentName -> coachEmail}
+        };
         let user = null;
-        let currentWeeks = [];
-        let unsubAgents = null;
+        let unsubListeners = []; // multiple listeners for each coach team
 
         // ─── AUTH LOGIC ──────────────────────────────────────────────────────────────
         document.getElementById('login-btn').addEventListener('click', () => {
@@ -1331,7 +1140,7 @@
             if (u) {
                 user = u;
                 document.getElementById('login-overlay').classList.add('hidden');
-                await loadCoachData();
+                await loadPromoterData();
                 init();
             } else {
                 user = null;
@@ -1357,91 +1166,198 @@
             });
         }
 
-        async function loadCoachData() {
+        async function loadPromoterData() {
             if (!user) return;
-            const docRef = doc(db, "coaches", user.email);
+            const docRef = doc(db, "promoters", user.email);
             const docSnap = await getDoc(docRef);
             if (docSnap.exists()) {
                 const data = docSnap.data();
-                state.coachName = data.coachName || '';
+                state.promoterName = data.promoterName || data.coachName || user.displayName || '';
                 state.teamCode = data.teamCode || '';
-                state.promotorCode = data.promotorCode || '';
-                state.reportes = data.reportes || [];
+                // Store the embedded coaches array as fallback (from hierarchy loader)
+                state.embeddedCoaches = Array.isArray(data.coaches) ? data.coaches : [];
                 document.getElementById('team-display').textContent = 'Equipo: ' + (state.teamCode || 'Sin Código');
-                startListeningAgents();
+                startListeningCoaches();
             } else {
-                // First time coach
-                state.coachName = user.displayName;
+                // First time promoter
+                state.promoterName = user.displayName || '';
                 openConfig();
             }
         }
 
-        async function saveCoachData() {
+        async function savePromoterData() {
             if (!user) return;
             try {
-                await setDoc(doc(db, "coaches", user.email), {
-                    coachName: state.coachName,
-                    teamCode: state.teamCode,
-                    promotorCode: state.promotorCode,
-                    reportes: state.reportes
-                });
+                await setDoc(doc(db, "promoters", user.email), {
+                    promoterName: state.promoterName,
+                    teamCode: state.teamCode
+                }, { merge: true });
                 document.getElementById('team-display').textContent = 'Equipo: ' + (state.teamCode || 'Sin Código');
-            } catch (err) { console.error("Error saving coach:", err); }
+            } catch (err) { console.error("Error saving promoter:", err); }
         }
 
-        function startListeningAgents() {
-            if (unsubAgents) unsubAgents();
-            if (!state.teamCode) return;
+        function stopAllListeners() {
+            unsubListeners.forEach(fn => { try { fn(); } catch (e) { } });
+            unsubListeners = [];
+        }
 
-            const q = query(collection(db, "users"), where("teamCode", "==", state.teamCode));
-            unsubAgents = onSnapshot(q, (snapshot) => {
-                const allEntries = [];
-                const allAgents = [];
-                snapshot.forEach((doc) => {
-                    const agentData = doc.data();
-                    if (agentData.agentName) {
-                        allAgents.push(agentData.agentName);
-                        if (agentData.entries) {
-                            // Ensure each entry knows which agent it belongs to
-                            agentData.entries.forEach(e => {
-                                e.agent = agentData.agentName;
-                                // Deduplicate or merge entries
-                                const existingIdx = allEntries.findIndex(ae => ae.agent === e.agent && ae.mes === e.mes && ae.semana == e.semana);
-                                if (existingIdx >= 0) allEntries[existingIdx] = e;
-                                else allEntries.push(e);
-                            });
-                        }
+        function startListeningCoaches() {
+            stopAllListeners();
+
+            // Path A: query coaches by promotorTeamCode (if set on coach docs)
+            if (state.teamCode) {
+                const coachQ = query(collection(db, "coaches"), where("promotorTeamCode", "==", state.teamCode));
+                const unsubCoaches = onSnapshot(coachQ, (snapshot) => {
+                    let coaches = [];
+                    const coachesMap = {};
+                    snapshot.forEach((docSnap) => {
+                        const cdata = docSnap.data();
+                        const coachEmail = docSnap.id;
+                        const coachEntry = {
+                            email: coachEmail,
+                            coachName: cdata.coachName || coachEmail,
+                            teamCode: cdata.teamCode || ('TEAM-COACH-' + (cdata.coachNum || '')),
+                            coachNum: cdata.coachNum,
+                            reportes: cdata.reportes || [],
+                            reclutamiento: cdata.reclutamiento || []
+                        };
+                        coaches.push(coachEntry);
+                        coachesMap[coachEmail] = coachEntry;
+                    });
+
+                    // Fallback: if the query returned nothing but promoter has an embedded coaches array, use it
+                    if (coaches.length === 0 && state.embeddedCoaches && state.embeddedCoaches.length > 0) {
+                        loadCoachesFromEmbedded();
+                        return;
                     }
+
+                    state.coaches = coaches;
+                    state.coachesMap = coachesMap;
+                    startListeningAgentsForCoaches();
+                    refreshAll();
                 });
-                state.agents = allAgents;
-                state.entries = allEntries;
-                refreshAll();
+                unsubListeners.push(unsubCoaches);
+            } else if (state.embeddedCoaches && state.embeddedCoaches.length > 0) {
+                loadCoachesFromEmbedded();
+            }
+        }
+
+        async function loadCoachesFromEmbedded() {
+            const coaches = [];
+            const coachesMap = {};
+            for (const c of state.embeddedCoaches) {
+                try {
+                    const snap = await getDoc(doc(db, "coaches", c.email));
+                    if (snap.exists()) {
+                        const cdata = snap.data();
+                        const entry = {
+                            email: c.email,
+                            coachName: cdata.coachName || c.name || c.email,
+                            teamCode: cdata.teamCode || ('TEAM-COACH-' + (cdata.coachNum || c.coachNum || '')),
+                            coachNum: cdata.coachNum || c.coachNum,
+                            reportes: cdata.reportes || [],
+                            reclutamiento: cdata.reclutamiento || []
+                        };
+                        coaches.push(entry);
+                        coachesMap[c.email] = entry;
+                    } else {
+                        const entry = {
+                            email: c.email,
+                            coachName: c.name || c.email,
+                            teamCode: 'TEAM-COACH-' + (c.coachNum || ''),
+                            coachNum: c.coachNum,
+                            reportes: [],
+                            reclutamiento: []
+                        };
+                        coaches.push(entry);
+                        coachesMap[c.email] = entry;
+                    }
+                } catch (e) { console.error('Error loading coach', c.email, e); }
+            }
+            state.coaches = coaches;
+            state.coachesMap = coachesMap;
+            startListeningAgentsForCoaches();
+            refreshAll();
+        }
+
+        // Keep separate list of agent unsubscribers so we can reset them when coaches change
+        let agentUnsubs = [];
+        function clearAgentUnsubs() {
+            agentUnsubs.forEach(fn => { try { fn(); } catch (e) { } });
+            agentUnsubs = [];
+        }
+
+        function startListeningAgentsForCoaches() {
+            clearAgentUnsubs();
+
+            // Aggregate state
+            const aggregated = {
+                entries: [],
+                agents: [],
+                agentCoachMap: {}
+            };
+
+            state.coaches.forEach(coach => {
+                if (!coach.teamCode) return;
+                const agentQ = query(collection(db, "users"), where("teamCode", "==", coach.teamCode));
+                const unsub = onSnapshot(agentQ, (snapshot) => {
+                    // Rebuild state per coach teamCode whenever there's a change
+                    // Remove previous entries/agents from this coach
+                    aggregated.entries = aggregated.entries.filter(e => aggregated.agentCoachMap[e.agent] !== coach.email);
+                    aggregated.agents = aggregated.agents.filter(a => aggregated.agentCoachMap[a] !== coach.email);
+
+                    // Remove mappings for this coach
+                    Object.keys(aggregated.agentCoachMap).forEach(ag => {
+                        if (aggregated.agentCoachMap[ag] === coach.email) {
+                            delete aggregated.agentCoachMap[ag];
+                        }
+                    });
+
+                    snapshot.forEach((docSnap) => {
+                        const agentData = docSnap.data();
+                        if (agentData.agentName) {
+                            if (!aggregated.agents.includes(agentData.agentName)) {
+                                aggregated.agents.push(agentData.agentName);
+                            }
+                            aggregated.agentCoachMap[agentData.agentName] = coach.email;
+                            if (agentData.entries) {
+                                agentData.entries.forEach(e => {
+                                    e.agent = agentData.agentName;
+                                    const existingIdx = aggregated.entries.findIndex(ae => ae.agent === e.agent && ae.mes === e.mes && ae.semana == e.semana);
+                                    if (existingIdx >= 0) aggregated.entries[existingIdx] = e;
+                                    else aggregated.entries.push(e);
+                                });
+                            }
+                        }
+                    });
+
+                    state.entries = aggregated.entries;
+                    state.agents = aggregated.agents;
+                    state.agentCoachMap = aggregated.agentCoachMap;
+                    refreshAll();
+                });
+                agentUnsubs.push(unsub);
             });
         }
 
         // ─── INIT ─────────────────────────────────────────────────────────────────────
         window.init = function () {
-            updateBitacoraCalendar();
             refreshAll();
-            if (state.entries && state.entries.length > 0) {
-                // Root cause fix: expose module functions to window - v1.3.5
-            }
         }
 
         window.saveState = async function () {
-            await saveCoachData();
+            await savePromoterData();
         }
 
         function refreshAll() {
-            document.getElementById('coach-display').textContent = 'Coach: ' + (state.coachName || '—');
-            refreshAgentSelects();
-            renderHistory();
+            document.getElementById('coach-display').textContent = 'Promotor: ' + (state.promoterName || '—');
+            refreshCoachFilters();
+            refreshChartAgents();
             renderLeaderboard();
             renderCharts();
             renderKPIs();
             refreshMonthFilters();
-            renderReporteHistory();
-            loadReclutamiento();
+            renderCoachReportes();
         }
 
         // ─── TABS ─────────────────────────────────────────────────────────────────────
@@ -1453,30 +1369,31 @@
             if (name === 'charts') renderCharts();
             if (name === 'kpis') renderKPIs();
             if (name === 'leaderboard') renderLeaderboard();
-            if (name === 'reporte') renderReporteHistory();
+            if (name === 'reporte') renderCoachReportes();
         }
 
         // ─── CONFIG ──────────────────────────────────────────────────────────────────
         window.openConfig = function () {
-            document.getElementById('inp-coach').value = state.coachName || '';
-            document.getElementById('inp-teamcode').value = state.teamCode || '';
-            document.getElementById('inp-promocode').value = state.promotorCode || '';
-            renderAgentList();
+            const inpCoach = document.getElementById('inp-coach');
+            const inpTeam = document.getElementById('inp-teamcode');
+            const inpPromo = document.getElementById('inp-promocode');
+            if (inpCoach) inpCoach.value = state.promoterName || '';
+            if (inpTeam) inpTeam.value = state.teamCode || '';
+            if (inpPromo) inpPromo.value = '';
+            renderCoachList();
             document.getElementById('config-modal').classList.add('open');
         }
 
         window.closeConfig = function () { document.getElementById('config-modal').classList.remove('open'); }
 
-        window.addAgent = function () { }
-        window.removeAgent = function () { }
-
-        window.renderAgentList = function () {
+        window.renderCoachList = function () {
             const el = document.getElementById('agent-list');
-            if (!state.agents.length) { el.innerHTML = '<div style="color:var(--slate);font-size:11px;padding:8px 0;">No hay agentes vinculados con este código de equipo.</div>'; return; }
-            el.innerHTML = state.agents.map((a, i) => `
+            if (!el) return;
+            if (!state.coaches.length) { el.innerHTML = '<div style="color:var(--slate);font-size:11px;padding:8px 0;">No hay coaches vinculados con este código de equipo todavía.</div>'; return; }
+            el.innerHTML = state.coaches.map((c) => `
                 <div class="agent-chip" style="justify-content:space-between; padding:10px 15px;">
-                    <span style="font-weight:600;"><i class="fa fa-user-check" style="color:var(--green); margin-right:8px;"></i>${a}</span>
-                    <span style="font-size:9px; color:var(--slate); text-transform:uppercase; letter-spacing:1px;">Activo</span>
+                    <span style="font-weight:600;"><i class="fa fa-user-tie" style="color:var(--gold); margin-right:8px;"></i>${c.coachName}</span>
+                    <span style="font-size:9px; color:var(--slate); text-transform:uppercase; letter-spacing:1px;">${c.email}</span>
                 </div>
             `).join('');
         }
@@ -1491,12 +1408,11 @@
                     btn.disabled = true;
                 }
 
-                state.coachName = document.getElementById('inp-coach').value.trim();
+                state.promoterName = document.getElementById('inp-coach').value.trim();
                 state.teamCode = document.getElementById('inp-teamcode').value.trim();
-                state.promotorCode = document.getElementById('inp-promocode').value.trim();
 
                 await saveState();
-                startListeningAgents();
+                startListeningCoaches();
                 refreshAll();
 
                 if (btn) {
@@ -1510,61 +1426,49 @@
                     closeConfig();
                 }
             } catch (err) {
-                console.error("Error saving coach:", err);
+                console.error("Error saving promoter:", err);
                 alert("Error al guardar: " + err.message);
             }
         }
 
-        window.exportConfig = function () {
-            const config = { coachName: state.coachName, teamCode: state.teamCode };
-            const blob = new Blob([JSON.stringify(config, null, 2)], { type: 'application/json' });
-            const a = document.createElement('a');
-            a.href = URL.createObjectURL(blob);
-            a.download = `config_coach_${(state.coachName || 'coach').replace(/\s+/g, '_')}.json`;
-            a.click();
-        }
+        function refreshCoachFilters() {
+            // Build options from state.coaches - key is email, value is coachName for display
+            const opts = state.coaches
+                .slice()
+                .sort((a, b) => (a.coachName || '').localeCompare(b.coachName || ''))
+                .map(c => `<option value="${c.email}">${c.coachName}</option>`).join('');
 
-        window.importConfig = function (event) {
-            const file = event.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = async (e) => {
-                try {
-                    const data = JSON.parse(e.target.result);
-                    if (data.coachName || data.teamCode) {
-                        if (confirm(`¿Importar configuración de ${data.coachName || 'Sin Nombre'}?`)) {
-                            state.coachName = data.coachName || state.coachName;
-                            state.teamCode = data.teamCode || state.teamCode;
-                            document.getElementById('inp-coach').value = state.coachName;
-                            document.getElementById('inp-teamcode').value = state.teamCode;
-                            await saveState();
-                            startListeningAgents();
-                            refreshAll();
-                            alert("✅ Configuración importada y guardada.");
-                        }
-                    } else {
-                        alert("El archivo no parece ser una configuración válida.");
-                    }
-                } catch (err) { alert("Error al importar: " + err.message); }
-            };
-            reader.readAsText(file);
-        }
-
-        function refreshAgentSelects() {
-            const opts = state.agents.map(a => `<option value="${a}">${a}</option>`).join('');
-            ['sel-agent', 'chart-agent-sel'].forEach(id => {
+            ['lb-coach-filter', 'kpi-coach-sel', 'chart-coach-sel', 'rpt-coach-filter'].forEach(id => {
                 const el = document.getElementById(id);
+                if (!el) return;
                 const cur = el.value;
-                if (id === 'chart-agent-sel') {
-                    el.innerHTML = '<option value="__all__">Todos (Total equipo)</option>' + opts;
-                } else {
-                    el.innerHTML = '<option value="">— Selecciona agente —</option>' + opts;
-                }
-                el.value = cur;
+                el.innerHTML = '<option value="">Todos los coaches</option>' + opts;
+                // Preserve selection if still valid
+                if (cur && state.coaches.some(c => c.email === cur)) el.value = cur;
             });
         }
 
-        // ─── CALENDAR LOGIC ───────────────────────────────────────────────────────────
+        function refreshChartAgents() {
+            const chartCoachEl = document.getElementById('chart-coach-sel');
+            const selectedCoach = chartCoachEl ? chartCoachEl.value : '';
+            let agentsForCoach = state.agents;
+            if (selectedCoach) {
+                agentsForCoach = state.agents.filter(a => state.agentCoachMap[a] === selectedCoach);
+            }
+            const opts = agentsForCoach
+                .slice()
+                .sort((a, b) => a.localeCompare(b))
+                .map(a => `<option value="${a}">${a}</option>`).join('');
+            const el = document.getElementById('chart-agent-sel');
+            if (!el) return;
+            const cur = el.value;
+            el.innerHTML = '<option value="__all__">Todos (Total equipo)</option>' + opts;
+            // Preserve selection if still valid
+            if (cur === '__all__' || agentsForCoach.includes(cur)) el.value = cur;
+            else el.value = '__all__';
+        }
+
+        // ─── CALENDAR LOGIC (used only by leaderboard week count) ────────────────────
 
         function getMonthCalendar(year, month) {
             const daysInMonth = new Date(year, month, 0).getDate();
@@ -1579,229 +1483,6 @@
                 dow = (dow + 1) % 7;
             }
             return weeks;
-        }
-
-        function updateBitacoraCalendar() {
-            const month = parseInt(document.getElementById('sel-month').value);
-            const year = parseInt(document.getElementById('inp-year').value);
-            if (!month || !year) return;
-            currentWeeks = getMonthCalendar(year, month);
-            const sel = document.getElementById('sel-semana');
-            const prev = sel.value;
-            sel.innerHTML = currentWeeks.map((w, i) => {
-                const first = w[0], last = w[w.length - 1];
-                return `<option value="${i + 1}">Sem ${i + 1} &mdash; ${first.dayName.slice(0, 3)} ${first.date} al ${last.dayName.slice(0, 3)} ${last.date}</option>`;
-            }).join('');
-            sel.value = (prev && parseInt(prev) <= currentWeeks.length) ? prev : '1';
-            updateWeekTable();
-        }
-
-        function updateWeekTable() {
-            const semIdx = parseInt(document.getElementById('sel-semana').value) - 1;
-            const weekDays = currentWeeks[semIdx] || [];
-            buildWeekTable(weekDays);
-            // show info
-            const month = parseInt(document.getElementById('sel-month').value);
-            const year = parseInt(document.getElementById('inp-year').value);
-            const mesStr = MONTHS_ES[month - 1] + ' ' + year;
-            const info = document.getElementById('week-info');
-            if (weekDays.length) {
-                info.textContent = `📅 ${mesStr} · Semana ${semIdx + 1} de ${currentWeeks.length} · Días: ${weekDays.map(d => d.dayName + ' ' + d.date).join(', ')}`;
-            }
-            updateTotals(false);
-            autoLoadBitacora();
-        }
-
-        // ─── WEEK TABLE ───────────────────────────────────────────────────────────────
-        function buildWeekTable(weekDays) {
-            const tbody = document.getElementById('week-body');
-            tbody.innerHTML = weekDays.map(({ dayName, date }) => `
-    <tr data-day="${dayName}">
-      <td class="day-label">${dayName} <span style="font-size:10px;color:var(--slate);font-weight:400;">${date}</span></td>
-      ${COLS.map(c => `<td><input type="number" class="num-input" data-day="${dayName}" data-col="${c}" min="0" value="0" oninput="updateTotals()"></td>`).join('')}
-      <td><input type="number" class="num-input prima-input" data-day="${dayName}" data-col="prima" min="0" value="0" step="0.01" oninput="updateTotals()"></td>
-      <td id="funnel-${dayName}" style="font-size:16px;text-align:center;">—</td>
-    </tr>`).join('');
-        }
-
-        function getInputVal(day, col) {
-            const el = document.querySelector(`input[data-day="${day}"][data-col="${col}"]`);
-            return el ? (parseFloat(el.value) || 0) : 0;
-        }
-
-        function updateTotals(autoSave = true) {
-            const totals = { P: 0, E: 0, C: 0, V: 0, S: 0, prima: 0 };
-            document.querySelectorAll('#week-body tr').forEach(row => {
-                const day = row.dataset.day;
-                const dvals = {};
-                COLS.forEach(c => {
-                    dvals[c] = parseFloat(document.querySelector(`input[data-day="${day}"][data-col="${c}"]`).value) || 0;
-                });
-                dvals.prima = parseFloat(document.querySelector(`input[data-day="${day}"][data-col="prima"]`).value) || 0;
-
-                const { ok, errors } = validateDay(dvals);
-                if (ok) {
-                    COLS.forEach(c => totals[c] += dvals[c]);
-                    totals.prima += dvals.prima;
-                }
-
-                const allZero = dvals.P === 0 && dvals.E === 0 && dvals.C === 0 && dvals.V === 0 && dvals.S === 0 && dvals.prima === 0;
-                const cell = document.getElementById('funnel-' + day);
-                if (cell) {
-                    cell.textContent = allZero ? '—' : (ok ? '🟢' : '🔴');
-                    cell.title = ok ? 'Todo correcto' : '⚠️ ERRORES (No sumados al total):\n• ' + errors.join('\n• ');
-                }
-            });
-            COLS.forEach(c => { document.getElementById('tt-' + c).textContent = totals[c]; });
-            document.getElementById('tt-$').textContent = '$' + totals.prima.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-
-            // Update month totals
-            updateMonthTotals();
-
-            if (autoSave) saveEntry(true);
-        }
-
-        function updateMonthTotals() {
-            const agent = document.getElementById('sel-agent').value;
-            const mes = getMesStr();
-            const monthTotals = { P: 0, E: 0, C: 0, V: 0, S: 0, prima: 0 };
-
-            if (agent && mes && state.entries) {
-                const agentEntries = state.entries.filter(e => e.agent === agent && e.mes === mes);
-                agentEntries.forEach(entry => {
-                    entry.dias.forEach(d => {
-                        const { ok } = validateDay(d);
-                        if (ok) {
-                            COLS.forEach(c => monthTotals[c] += d[c]);
-                            monthTotals.prima += d.prima;
-                        }
-                    });
-                });
-            }
-
-            COLS.forEach(c => { document.getElementById('ttm-' + c).textContent = monthTotals[c]; });
-            document.getElementById('ttm-$').textContent = '$' + monthTotals.prima.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-        }
-
-        function clearForm(autoSave = true) {
-            document.querySelectorAll('#week-body input').forEach(inp => { inp.value = 0; });
-            updateTotals(autoSave);
-        }
-
-        // ─── SAVE / LOAD ENTRY ────────────────────────────────────────────────────────
-        function getMesStr() {
-            const m = parseInt(document.getElementById('sel-month').value);
-            const y = parseInt(document.getElementById('inp-year').value);
-            return MONTHS_ES[m - 1] + ' ' + y;
-        }
-
-        function saveEntry(silent = false) {
-            const agent = document.getElementById('sel-agent').value;
-            const semana = document.getElementById('sel-semana').value;
-            const mes = getMesStr();
-            if (!agent || !semana) {
-                if (!silent) alert('Selecciona agente y semana.');
-                return;
-            }
-
-            // collect only rows currently in the table
-            const dias = [];
-            document.querySelectorAll('#week-body tr').forEach(row => {
-                const day = row.dataset.day;
-                dias.push({
-                    dia: day, P: getInputVal(day, 'P'), E: getInputVal(day, 'E'),
-                    C: getInputVal(day, 'C'), V: getInputVal(day, 'V'), S: getInputVal(day, 'S'),
-                    prima: getInputVal(day, 'prima')
-                });
-            });
-            const totales = { P: 0, E: 0, C: 0, V: 0, S: 0, prima: 0 };
-            dias.forEach(d => { COLS.forEach(c => totales[c] += d[c]); totales.prima += d.prima; });
-
-            const idx = state.entries.findIndex(e => e.agent === agent && e.mes === mes && e.semana == semana);
-            const entry = { agent, mes, semana, dias, totales };
-            if (idx >= 0) state.entries[idx] = entry; else state.entries.push(entry);
-
-            saveState();
-            if (!silent) {
-                refreshAll();
-                const msg = document.getElementById('save-msg');
-                msg.style.display = 'inline-flex'; setTimeout(() => msg.style.display = 'none', 2500);
-            }
-        }
-
-        function autoLoadBitacora() {
-            const agent = document.getElementById('sel-agent').value;
-            const semana = document.getElementById('sel-semana').value;
-            const mes = getMesStr();
-            const entry = state.entries.find(e => e.agent === agent && e.mes === mes && e.semana == semana);
-            if (!entry) { clearForm(false); return; }
-            entry.dias.forEach(d => {
-                COLS.forEach(c => { const inp = document.querySelector(`input[data-day="${d.dia}"][data-col="${c}"]`); if (inp) inp.value = d[c]; });
-                const pi = document.querySelector(`input[data-day="${d.dia}"][data-col="prima"]`); if (pi) pi.value = d.prima;
-            });
-            updateTotals(false);
-            renderHistory();
-        }
-
-        // ─── HISTORY ──────────────────────────────────────────────────────────────────
-        function renderHistory() {
-            const grid = document.getElementById('history-grid');
-            const selectedAgent = document.getElementById('sel-agent').value;
-
-            if (!state.entries.length) {
-                grid.innerHTML = '<div class="empty-state"><i class="fa fa-inbox"></i>No hay entradas aún. Llena y guarda la bitácora arriba.</div>';
-                return;
-            }
-
-            const filtered = selectedAgent
-                ? state.entries.filter(e => e.agent === selectedAgent)
-                : state.entries;
-
-            if (!filtered.length) {
-                grid.innerHTML = '<div class="empty-state"><i class="fa fa-inbox"></i>No hay entradas para este agente.</div>';
-                return;
-            }
-
-            grid.innerHTML = filtered.map((e, i) => {
-                const originalIdx = state.entries.indexOf(state.entries.find(x => x.agent === e.agent && x.mes === e.mes && x.semana === e.semana));
-                return `
-    <div class="history-chip" onclick="loadEntryIntoForm(${originalIdx})">
-      <span style="font-weight:700;color:var(--gold)">${e.agent}</span>
-      <span style="color:var(--slate)">${e.mes} · Sem ${e.semana}</span>
-      <span style="color:var(--teal);font-size:11px;">P:${e.totales.P} E:${e.totales.E} V:${e.totales.V}</span>
-      <button class="del-entry" onclick="deleteEntry(event,${originalIdx})" title="Eliminar"><i class="fa fa-xmark"></i></button>
-    </div>`;
-            }).join('');
-        }
-
-        function loadEntryIntoForm(i) {
-            const e = state.entries[i];
-            document.getElementById('sel-agent').value = e.agent;
-            // parse mes string (e.g. "Abril 2026") back to month+year
-            const parts = e.mes.split(' ');
-            const mIdx = MONTHS_ES.indexOf(parts[0]);
-            if (mIdx >= 0) {
-                document.getElementById('sel-month').value = mIdx + 1;
-                document.getElementById('inp-year').value = parseInt(parts[1]) || new Date().getFullYear();
-                updateBitacoraCalendar(); // rebuild weeks
-            }
-            document.getElementById('sel-semana').value = e.semana;
-            updateWeekTable(); // rebuild table for that semana
-            e.dias.forEach(d => {
-                COLS.forEach(c => { const inp = document.querySelector(`input[data-day="${d.dia}"][data-col="${c}"]`); if (inp) inp.value = d[c]; });
-                const pi = document.querySelector(`input[data-day="${d.dia}"][data-col="prima"]`); if (pi) pi.value = d.prima;
-            });
-            updateTotals();
-            switchTab('bitacora', document.querySelector('.tab-btn'));
-            document.getElementById('modal-bitacora-log').classList.remove('open');
-        }
-
-        function deleteEntry(ev, i) {
-            ev.stopPropagation();
-            if (!confirm('¿Eliminar esta entrada?')) return;
-            state.entries.splice(i, 1);
-            saveState();
-            refreshAll();
         }
 
         // ─── MONTH FILTERS ────────────────────────────────────────────────────────────
@@ -1833,7 +1514,6 @@
 
             // Set default leaderboard to last month and last week
             initLeaderboardDefaults();
-            initBitacoraDefaults();
         }
 
         function initLeaderboardDefaults() {
@@ -1868,34 +1548,6 @@
                 const lastWeek = Math.max(...entriesLastMes.map(e => parseInt(e.semana)));
                 document.getElementById('lb-sem-filter').value = lastWeek;
             }
-        }
-
-        function initBitacoraDefaults() {
-            if (state.entries.length === 0) return;
-
-            // Find last month by sorting by year and month
-            const mesesConDatos = [...new Set(state.entries.map(e => e.mes))];
-            const lastMes = mesesConDatos.sort((a, b) => {
-                const [mesA, yearA] = a.split(' ');
-                const [mesB, yearB] = b.split(' ');
-                const monthA = MONTHS_ES.indexOf(mesA) + 1;
-                const monthB = MONTHS_ES.indexOf(mesB) + 1;
-                const yA = parseInt(yearA);
-                const yB = parseInt(yearB);
-                if (yA !== yB) return yA - yB;
-                return monthA - monthB;
-            }).reverse()[0];
-
-            const [mesName, year] = lastMes.split(' ');
-            const monthIdx = MONTHS_ES.indexOf(mesName) + 1;
-            document.getElementById('sel-month').value = monthIdx;
-            updateBitacoraCalendar();
-
-            // Find last week in that month
-            const entriesLastMes = state.entries.filter(e => e.mes === lastMes);
-            const lastWeek = Math.max(...entriesLastMes.map(e => parseInt(e.semana)));
-            document.getElementById('sel-semana').value = lastWeek;
-            updateWeekTable();
         }
 
         // ─── LEADERBOARD ──────────────────────────────────────────────────────────────
@@ -1976,8 +1628,11 @@
         function renderLeaderboard() {
             const mesF = document.getElementById('lb-mes-filter').value;
             const semF = document.getElementById('lb-sem-filter').value;
+            const coachF = document.getElementById('lb-coach-filter') ? document.getElementById('lb-coach-filter').value : '';
             let filtered = state.entries.filter(e =>
-                (!mesF || e.mes === mesF) && (!semF || e.semana == semF)
+                (!mesF || e.mes === mesF) &&
+                (!semF || e.semana == semF) &&
+                (!coachF || state.agentCoachMap[e.agent] === coachF)
             );
 
             // aggregate per agent (re-summing only valid days + tracking red activity)
@@ -2097,11 +1752,17 @@
         function renderCharts() {
             const agSel = document.getElementById('chart-agent-sel').value;
             const period = document.getElementById('chart-period-sel').value;
+            const coachF = document.getElementById('chart-coach-sel') ? document.getElementById('chart-coach-sel').value : '';
             let entries = [];
+
+            // Apply coach filter first
+            const baseEntries = coachF
+                ? state.entries.filter(e => state.agentCoachMap[e.agent] === coachF)
+                : state.entries;
 
             // Find the latest month in the data
             let latestDate = null;
-            state.entries.forEach(e => {
+            baseEntries.forEach(e => {
                 const [mes, year] = e.mes.split(' ');
                 const monthIdx = MONTHS_ES.indexOf(mes) + 1;
                 const entryDate = new Date(parseInt(year), monthIdx - 1, 1);
@@ -2110,11 +1771,11 @@
                 }
             });
 
-            let filtered = state.entries;
+            let filtered = baseEntries;
             if (latestDate) {
                 if (period === '12m') {
                     const last12Months = new Date(latestDate.getFullYear(), latestDate.getMonth() - 11, 1);
-                    filtered = state.entries.filter(e => {
+                    filtered = baseEntries.filter(e => {
                         const [mes, year] = e.mes.split(' ');
                         const monthIdx = MONTHS_ES.indexOf(mes) + 1;
                         const entryDate = new Date(parseInt(year), monthIdx - 1, 1);
@@ -2122,7 +1783,7 @@
                     });
                 } else if (period === '3m') {
                     const last3Months = new Date(latestDate.getFullYear(), latestDate.getMonth() - 2, 1);
-                    filtered = state.entries.filter(e => {
+                    filtered = baseEntries.filter(e => {
                         const [mes, year] = e.mes.split(' ');
                         const monthIdx = MONTHS_ES.indexOf(mes) + 1;
                         const entryDate = new Date(parseInt(year), monthIdx - 1, 1);
@@ -2130,7 +1791,7 @@
                     });
                 } else if (period === '6m') {
                     const last6Months = new Date(latestDate.getFullYear(), latestDate.getMonth() - 5, 1);
-                    filtered = state.entries.filter(e => {
+                    filtered = baseEntries.filter(e => {
                         const [mes, year] = e.mes.split(' ');
                         const monthIdx = MONTHS_ES.indexOf(mes) + 1;
                         const entryDate = new Date(parseInt(year), monthIdx - 1, 1);
@@ -2261,11 +1922,17 @@
         // ─── KPI CHARTS ──────────────────────────────────────────────────────────────
         function renderKPIs() {
             const period = document.getElementById('kpi-period-sel').value;
+            const coachF = document.getElementById('kpi-coach-sel') ? document.getElementById('kpi-coach-sel').value : '';
             let entries = [];
+
+            // Apply coach filter first
+            const baseEntries = coachF
+                ? state.entries.filter(e => state.agentCoachMap[e.agent] === coachF)
+                : state.entries;
 
             // Find the latest month in the data
             let latestDate = null;
-            state.entries.forEach(e => {
+            baseEntries.forEach(e => {
                 const [mes, year] = e.mes.split(' ');
                 const monthIdx = MONTHS_ES.indexOf(mes) + 1;
                 const entryDate = new Date(parseInt(year), monthIdx - 1, 1);
@@ -2275,11 +1942,11 @@
             });
 
             if (!latestDate) {
-                entries = state.entries;
+                entries = baseEntries;
             } else {
                 if (period === '1m') {
                     const last1Month = new Date(latestDate.getFullYear(), latestDate.getMonth(), 1);
-                    entries = state.entries.filter(e => {
+                    entries = baseEntries.filter(e => {
                         const [mes, year] = e.mes.split(' ');
                         const monthIdx = MONTHS_ES.indexOf(mes) + 1;
                         const entryDate = new Date(parseInt(year), monthIdx - 1, 1);
@@ -2287,7 +1954,7 @@
                     });
                 } else if (period === '3m') {
                     const last3Months = new Date(latestDate.getFullYear(), latestDate.getMonth() - 2, 1);
-                    entries = state.entries.filter(e => {
+                    entries = baseEntries.filter(e => {
                         const [mes, year] = e.mes.split(' ');
                         const monthIdx = MONTHS_ES.indexOf(mes) + 1;
                         const entryDate = new Date(parseInt(year), monthIdx - 1, 1);
@@ -2295,7 +1962,7 @@
                     });
                 } else if (period === '6m') {
                     const last6Months = new Date(latestDate.getFullYear(), latestDate.getMonth() - 5, 1);
-                    entries = state.entries.filter(e => {
+                    entries = baseEntries.filter(e => {
                         const [mes, year] = e.mes.split(' ');
                         const monthIdx = MONTHS_ES.indexOf(mes) + 1;
                         const entryDate = new Date(parseInt(year), monthIdx - 1, 1);
@@ -2303,14 +1970,14 @@
                     });
                 } else if (period === '12m') {
                     const last12Months = new Date(latestDate.getFullYear(), latestDate.getMonth() - 11, 1);
-                    entries = state.entries.filter(e => {
+                    entries = baseEntries.filter(e => {
                         const [mes, year] = e.mes.split(' ');
                         const monthIdx = MONTHS_ES.indexOf(mes) + 1;
                         const entryDate = new Date(parseInt(year), monthIdx - 1, 1);
                         return entryDate >= last12Months;
                     });
                 } else {
-                    entries = state.entries;
+                    entries = baseEntries;
                 }
             }
 
@@ -2426,367 +2093,194 @@
             };
         }
 
-        // ─── EXPORT / IMPORT ─────────────────────────────────────────────────────────
-        function exportJSON() {
-            const errors = [];
-            state.entries.forEach(e => {
-                e.dias.forEach(d => {
-                    const allZero = d.P === 0 && d.E === 0 && d.C === 0 && d.V === 0 && d.S === 0;
-                    if (allZero) return;
+        // ─── REPORTES DE COACHES (Promotor view) ─────────────────────────────────────
+        function escapeHtml(str) {
+            if (str === null || str === undefined) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
 
-                    const ok = d.P >= d.E && d.E >= d.C && d.C >= d.V && d.S >= d.V && d.S <= (d.V * 2) && (d.S > 0 ? d.prima >= 1 : true);
-                    if (!ok) {
-                        let razon = '';
-                        if (d.P < d.E) razon = 'Contactos < Entrevistas';
-                        else if (d.E < d.C) razon = 'Entrevistas < Cotizaciones';
-                        else if (d.C < d.V) razon = 'Cotizaciones < Cierres';
-                        else if (d.S < d.V) razon = 'Solicitudes < Cierres';
-                        else if (d.V === 0 && d.S > 0) razon = 'Si hay solicitudes, como mínimo tiene que haber 1 cierre';
-                        else if (d.S > d.V * 2) razon = 'Solicitudes > Doble de Cierres (Máx 2V)';
-                        else if (d.S > 0 && d.prima < 1) razon = 'Debe ingresar Prima ($) si hay solicitudes';
-                        errors.push(`🚩 [${e.agent}] ${e.mes} - Sem ${e.semana} (${d.dia}): Rompe jerarquía (${razon})`);
-                    }
+        function refreshCoachReporteMonthFilter() {
+            const sel = document.getElementById('rpt-mes-filter');
+            if (!sel) return;
+
+            // Collect unique months from all coaches' reportes
+            const mesesSet = new Set();
+            state.coaches.forEach(c => {
+                (c.reportes || []).forEach(r => { if (r.mes) mesesSet.add(r.mes); });
+                (c.reclutamiento || []).forEach(r => { if (r.mes) mesesSet.add(r.mes); });
+            });
+            const meses = [...mesesSet].sort((a, b) => {
+                const pa = a.split(' '); const pb = b.split(' ');
+                const mA = MONTHS_ES.indexOf(pa[0]) + 1; const mB = MONTHS_ES.indexOf(pb[0]) + 1;
+                const yA = parseInt(pa[1]) || 0; const yB = parseInt(pb[1]) || 0;
+                if (yA !== yB) return yB - yA;
+                return mB - mA;
+            });
+
+            const cur = sel.value;
+            sel.innerHTML = '<option value="">Todos los meses</option>' +
+                meses.map(m => `<option value="${m}">${m}</option>`).join('');
+            if (cur && meses.includes(cur)) sel.value = cur;
+        }
+
+        function renderCoachReportes() {
+            const container = document.getElementById('coach-reportes-list');
+            if (!container) return;
+
+            refreshCoachReporteMonthFilter();
+
+            const coachF = document.getElementById('rpt-coach-filter') ? document.getElementById('rpt-coach-filter').value : '';
+            const mesF = document.getElementById('rpt-mes-filter') ? document.getElementById('rpt-mes-filter').value : '';
+
+            // Build list of coaches to display
+            const coachesToShow = coachF
+                ? state.coaches.filter(c => c.email === coachF)
+                : state.coaches.slice().sort((a, b) => (a.coachName || '').localeCompare(b.coachName || ''));
+
+            if (!coachesToShow.length) {
+                container.innerHTML = '<div class="empty-state"><i class="fa fa-inbox"></i>No hay coaches en tu equipo todavía.</div>';
+                return;
+            }
+
+            // For each coach, gather reportes by month (combined with reclutamiento)
+            const allBlocks = [];
+
+            coachesToShow.forEach(coach => {
+                const reportes = coach.reportes || [];
+                const reclutamiento = coach.reclutamiento || [];
+
+                // Get unique meses for this coach
+                const mesesSet = new Set();
+                reportes.forEach(r => { if (r.mes) mesesSet.add(r.mes); });
+                reclutamiento.forEach(r => { if (r.mes) mesesSet.add(r.mes); });
+                let meses = [...mesesSet];
+
+                if (mesF) meses = meses.filter(m => m === mesF);
+
+                // Sort newest first
+                meses.sort((a, b) => {
+                    const pa = a.split(' '); const pb = b.split(' ');
+                    const mA = MONTHS_ES.indexOf(pa[0]) + 1; const mB = MONTHS_ES.indexOf(pb[0]) + 1;
+                    const yA = parseInt(pa[1]) || 0; const yB = parseInt(pb[1]) || 0;
+                    if (yA !== yB) return yB - yA;
+                    return mB - mA;
+                });
+
+                meses.forEach(mes => {
+                    const rpt = reportes.find(r => r.mes === mes);
+                    const recl = reclutamiento.find(r => r.mes === mes);
+                    allBlocks.push({
+                        coachName: coach.coachName,
+                        coachEmail: coach.email,
+                        mes,
+                        rpt,
+                        recl
+                    });
                 });
             });
 
-            if (errors.length > 0) {
-                if (!confirm(`¿Seguro que quieres guardar los cambios? Tienes estas inconsistencias en los registros de la bitácora:\n\n${errors.join('\n')}`)) {
-                    return;
-                }
-            }
-
-            const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
-            const a = document.createElement('a');
-            a.href = URL.createObjectURL(blob);
-            a.download = `pecvs_${(state.coachName || 'coach').replace(/\s+/g, '_')}_${new Date().toISOString().slice(0, 10)}.json`;
-            a.click();
-        }
-
-        function importJSON(event) {
-            const file = event.target.files[0]; if (!file) return;
-            const reader = new FileReader();
-            reader.onload = e => {
-                try {
-                    const data = JSON.parse(e.target.result);
-                    if (!data.entries || !Array.isArray(data.entries)) throw new Error('Formato inválido');
-
-                    // Check if it's an individual agent file
-                    const isInd = data.agentName && data.entries.every(en => en.agent === data.agentName);
-                    const sourceName = data.agentName || data.coachName || 'Desconocido';
-
-                    let mode = 'replace';
-                    if (isInd) {
-                        const choice = confirm(`Has seleccionado un reporte individual de: ${data.agentName}\n\nPresiona ACEPTAR para CONSOLIDAR/SUMAR sus datos a tu equipo actual.\nPresiona CANCELAR para REEMPLAZAR todo tu tablero con este archivo.`);
-                        mode = choice ? 'merge' : 'replace';
-                    } else {
-                        if (!confirm(`Importar datos de ${file.name} (Coach: ${sourceName})?\nEsto reemplazará todos tus datos actuales.`)) return;
-                    }
-
-                    if (mode === 'replace') {
-                        state = data;
-                    } else {
-                        // MERGE logic
-                        if (!state.agents.includes(data.agentName)) {
-                            state.agents.push(data.agentName);
-                        }
-                        // Merge entries: replace existing same (agent, mes, semana) with NEW one
-                        data.entries.forEach(newE => {
-                            const oldIdx = state.entries.findIndex(oldE =>
-                                oldE.agent === newE.agent && oldE.mes === newE.mes && oldE.semana == newE.semana
-                            );
-                            if (oldIdx >= 0) state.entries[oldIdx] = newE;
-                            else state.entries.push(newE);
-                        });
-                        alert(`✅ Se consolidaron los datos de ${data.agentName} exitosamente.`);
-                    }
-
-                    saveState();
-                    refreshAll();
-                    if (state.entries && state.entries.length > 0) {
-                        loadEntryIntoForm(state.entries.length - 1);
-                    }
-                } catch (err) { alert('Error al importar: ' + err.message); }
-                event.target.value = '';
-            };
-            reader.readAsText(file);
-        }
-
-        // ─── REPORTE VENTAS ──────────────────────────────────────────────────────────
-        function tryLoadReporte() {
-            const mesStr = document.getElementById('rpt-mes').value + ' ' + document.getElementById('rpt-year').value;
-            const r = (state.reportes || []).find(r => r.mes === mesStr);
-            document.getElementById('rpt-analisis').value = r ? (r.analisis || '') : '';
-            document.getElementById('rpt-agentes').value = r ? (r.agentes || '') : '';
-            document.getElementById('rpt-compromisos').value = r ? (r.compromisos || '') : '';
-            document.getElementById('rpt-notas').value = r ? (r.notas || '') : '';
-
-            // Cargar reclutamiento
-            const recl = (state.reclutamiento || []).find(e => e.mes === mesStr);
-            const btnSi = document.getElementById('btn-reclutamiento-si');
-            const btnNo = document.getElementById('btn-reclutamiento-no');
-            if (recl) {
-                handleReclutamientoQ1(recl.q1);
-                if (recl.q1 === 'si') {
-                    document.getElementById('reclutamiento-cantidad').value = recl.q2 || '';
-                    document.getElementById('reclutamiento-nombres').value = recl.q3 || '';
-                    document.getElementById('reclutamiento-compromiso').value = recl.q4 || '';
-                }
-            } else {
-                handleReclutamientoQ1('no');
-                document.getElementById('reclutamiento-cantidad').value = '';
-                document.getElementById('reclutamiento-nombres').value = '';
-                document.getElementById('reclutamiento-compromiso').value = '';
-            }
-        }
-
-        async function saveReporte() {
-            // Validar campos requeridos
-            const mesVal = document.getElementById('rpt-mes').value;
-            const yearVal = document.getElementById('rpt-year').value;
-            const analisis = document.getElementById('rpt-analisis').value.trim();
-            const fraude = document.getElementById('rpt-agentes').value.trim();
-            const compromisos = document.getElementById('rpt-compromisos').value.trim();
-
-            // Validar reclutamiento
-            const btnSi = document.getElementById('btn-reclutamiento-si');
-            const btnNo = document.getElementById('btn-reclutamiento-no');
-            const reclutamientoQ1 = btnSi.style.opacity === '0.5' ? 'si' : (btnNo.style.opacity === '0.5' ? 'no' : null);
-            const reclutamientoQ2 = document.getElementById('reclutamiento-cantidad').value.trim();
-            const reclutamientoQ3 = document.getElementById('reclutamiento-nombres').value.trim();
-            const reclutamientoQ4 = document.getElementById('reclutamiento-compromiso').value.trim();
-
-            // Validaciones
-            if (!mesVal) { alert('Selecciona el mes del reporte'); return; }
-            if (!yearVal) { alert('Ingresa el año del reporte'); return; }
-            if (!analisis) { alert('Completa el análisis general del mes'); return; }
-            if (!fraude) { alert('Completa la sospecha de fraude en actividad'); return; }
-            if (!compromisos) { alert('Completa los compromisos del coach'); return; }
-            if (reclutamientoQ1 === null) { alert('Responde la primera pregunta de reclutamiento'); return; }
-            if (reclutamientoQ1 === 'si' && !reclutamientoQ2) { alert('Indica cuántos prospectos tienes a tu cargo'); return; }
-            if (reclutamientoQ1 === 'si' && !reclutamientoQ3) { alert('Escribe los nombres de los prospectos'); return; }
-            if (reclutamientoQ1 === 'si' && !reclutamientoQ4) { alert('Describe tu compromiso de formalización'); return; }
-
-            const mes = mesVal + ' ' + yearVal;
-            const rpt = {
-                mes,
-                analisis,
-                agentes: fraude,
-                compromisos,
-                notas: document.getElementById('rpt-notas').value,
-                fecha: new Date().toISOString()
-            };
-
-            // Guardar reporte de ventas
-            if (!state.reportes) state.reportes = [];
-            const idx = state.reportes.findIndex(r => r.mes === mes);
-            if (idx >= 0) state.reportes[idx] = rpt; else state.reportes.push(rpt);
-
-            // Guardar reclutamiento
-            const reclutamiento = {
-                fecha: new Date().toISOString(),
-                mes,
-                q1: reclutamientoQ1,
-                q2: reclutamientoQ1 === 'si' ? reclutamientoQ2 : '',
-                q3: reclutamientoQ1 === 'si' ? reclutamientoQ3 : '',
-                q4: reclutamientoQ1 === 'si' ? reclutamientoQ4 : ''
-            };
-            if (!state.reclutamiento) state.reclutamiento = [];
-            const reclIdx = state.reclutamiento.findIndex(e => e.mes === mes);
-            if (reclIdx >= 0) state.reclutamiento[reclIdx] = reclutamiento; else state.reclutamiento.push(reclutamiento);
-
-            await saveCoachData();
-            renderReporteHistory();
-            loadReclutamiento();
-
-            const msg = document.getElementById('rpt-msg');
-            msg.style.display = 'inline-flex';
-            setTimeout(() => msg.style.display = 'none', 2500);
-        }
-
-        // Deleted report deletion functionality per user request: "Que no puedan eliminar ningun reporte"
-        // function deleteReporte() {
-        //     const mes = document.getElementById('rpt-mes').value + ' ' + document.getElementById('rpt-year').value;
-        //     if (!confirm('¿Eliminar el reporte de ' + mes + '?')) return;
-        //     state.reportes = (state.reportes || []).filter(r => r.mes !== mes);
-        //     saveState();
-        //     renderReporteHistory();
-        //     ['rpt-analisis', 'rpt-agentes', 'rpt-compromisos', 'rpt-notas'].forEach(id => document.getElementById(id).value = '');
-        // }
-
-        function loadReporte(mesStr) {
-            const r = (state.reportes || []).find(r => r.mes === mesStr);
-            if (!r) return;
-            const parts = r.mes.split(' ');
-            if (parts.length >= 2) {
-                const elMes = document.getElementById('rpt-mes');
-                if (Array.from(elMes.options).some(o => o.value === parts[0])) elMes.value = parts[0];
-                document.getElementById('rpt-year').value = parts[1];
-            }
-            document.getElementById('rpt-analisis').value = r.analisis || '';
-            document.getElementById('rpt-agentes').value = r.agentes || '';
-            document.getElementById('rpt-compromisos').value = r.compromisos || '';
-            document.getElementById('rpt-notas').value = r.notas || '';
-            document.getElementById('modal-reporte-log').classList.remove('open');
-        }
-
-        function renderReporteHistory() {
-            const el = document.getElementById('rpt-history');
-            if (!el) return;
-            const list = state.reportes || [];
-            if (!list.length) { el.innerHTML = '<div class="empty-state"><i class="fa fa-inbox"></i>No hay reportes guardados aún.</div>'; return; }
-            el.innerHTML = list.map(r => `
-    <div class="history-chip" onclick="loadReporte('${r.mes}')" title="Cargar reporte">
-      <span style="font-weight:700;color:var(--gold)">${r.mes}</span>
-      <span style="color:var(--slate);font-size:11px;">${new Date(r.fecha).toLocaleDateString('es-MX')}</span>
-    </div>`).join('');
-        }
-
-        // ─── RECLUTAMIENTO ─────────────────────────────────────────────────────────────
-        function handleReclutamientoQ1(respuesta) {
-            const q2Div = document.getElementById('reclutamiento-q2');
-            const q3Div = document.getElementById('reclutamiento-q3');
-            const q4Div = document.getElementById('reclutamiento-q4');
-            const cantidad = document.getElementById('reclutamiento-cantidad');
-            const nombres = document.getElementById('reclutamiento-nombres');
-            const compromiso = document.getElementById('reclutamiento-compromiso');
-            const btnSi = document.getElementById('btn-reclutamiento-si');
-            const btnNo = document.getElementById('btn-reclutamiento-no');
-
-            // Reset button opacity
-            btnSi.style.opacity = '1';
-            btnNo.style.opacity = '1';
-
-            if (respuesta === 'si') {
-                btnSi.style.opacity = '0.5';
-                q2Div.style.display = 'block';
-                q3Div.style.display = 'block';
-                q4Div.style.display = 'block';
-                cantidad.focus();
-            } else if (respuesta === 'no') {
-                btnNo.style.opacity = '0.5';
-                q2Div.style.display = 'none';
-                q3Div.style.display = 'none';
-                q4Div.style.display = 'none';
-                cantidad.value = '';
-                nombres.value = '';
-                compromiso.value = '';
-            }
-        }
-
-        async function saveReclutamiento(q1_respuesta, q2_respuesta) {
-            // Determine Q1 response from buttons if not provided
-            if (!q1_respuesta) {
-                const btnSi = document.getElementById('btn-reclutamiento-si');
-                const btnNo = document.getElementById('btn-reclutamiento-no');
-                q1_respuesta = btnSi.style.opacity === '0.5' ? 'si' : 'no';
-            }
-
-            // Get Q2 response from textarea
-            if (q2_respuesta === undefined) {
-                q2_respuesta = document.getElementById('reclutamiento-compromiso').value;
-            }
-
-            // Validate
-            if (q1_respuesta === 'si' && !q2_respuesta.trim()) {
-                alert('Por favor ingresa tu compromiso');
+            if (!allBlocks.length) {
+                container.innerHTML = '<div class="empty-state"><i class="fa fa-inbox"></i>No hay reportes de coaches con los filtros actuales.</div>';
                 return;
             }
 
-            const mesActual = document.getElementById('rpt-mes').value + ' ' + document.getElementById('rpt-year').value;
+            // Sort all blocks: newest first, then by coach name
+            allBlocks.sort((a, b) => {
+                const pa = a.mes.split(' '); const pb = b.mes.split(' ');
+                const mA = MONTHS_ES.indexOf(pa[0]) + 1; const mB = MONTHS_ES.indexOf(pb[0]) + 1;
+                const yA = parseInt(pa[1]) || 0; const yB = parseInt(pb[1]) || 0;
+                if (yA !== yB) return yB - yA;
+                if (mA !== mB) return mB - mA;
+                return (a.coachName || '').localeCompare(b.coachName || '');
+            });
 
-            const entrada = {
-                fecha: new Date().toISOString(),
-                mes: mesActual,
-                q1: q1_respuesta,
-                q2: q2_respuesta
-            };
+            container.innerHTML = allBlocks.map(blk => {
+                const rpt = blk.rpt;
+                const recl = blk.recl;
 
-            if (!state.reclutamiento) state.reclutamiento = [];
-
-            // Verificar si ya existe respuesta para este mes
-            const idxExistente = state.reclutamiento.findIndex(e => e.mes === mesActual);
-            if (idxExistente >= 0) {
-                // Actualizar la existente
-                state.reclutamiento[idxExistente] = entrada;
-            } else {
-                // Agregar nueva
-                state.reclutamiento.push(entrada);
-            }
-
-            await saveCoachData();
-            loadReclutamiento();
-
-            // Reset form
-            document.getElementById('reclutamiento-q2').style.display = 'none';
-            document.getElementById('reclutamiento-compromiso').value = '';
-            document.getElementById('btn-reclutamiento-si').style.opacity = '1';
-            document.getElementById('btn-reclutamiento-no').style.opacity = '1';
-        }
-
-        function loadReclutamiento() {
-            const historialDiv = document.getElementById('reclutamiento-lista');
-            const entries = (state.reclutamiento || []).slice().reverse();
-
-            if (!entries.length) {
-                historialDiv.innerHTML = '<div style="color:var(--slate);font-size:12px;">Sin respuestas aún.</div>';
-                return;
-            }
-
-            historialDiv.innerHTML = entries.map(e => {
-                const fecha = new Date(e.fecha).toLocaleDateString('es-MX');
-                let respuesta = '';
-                if (e.q1 === 'si') {
-                    respuesta = `Sí - ${e.q2 || '0'} prospectos`;
-                    if (e.q3) respuesta += ` (${e.q3})`;
-                    respuesta += ` - Compromiso: ${e.q4 || ''}`;
+                let reclutamientoHtml = '';
+                if (recl) {
+                    if (recl.q1 === 'si') {
+                        reclutamientoHtml = `
+                            <div><strong style="color:var(--gold);">Prospectos a cargo (Q2):</strong> ${escapeHtml(recl.q2 || '0')}</div>
+                            <div><strong style="color:var(--gold);">Nombres (Q3):</strong> ${escapeHtml(recl.q3 || '—')}</div>
+                            <div><strong style="color:var(--gold);">Compromiso de formalización (Q4):</strong> ${escapeHtml(recl.q4 || '—')}</div>
+                        `;
+                    } else {
+                        reclutamientoHtml = `<div style="color:var(--slate);">No tiene prospectos en entrenamiento actualmente.</div>`;
+                    }
                 } else {
-                    respuesta = 'Todavía no';
+                    reclutamientoHtml = `<div style="color:var(--slate);">Sin datos de reclutamiento.</div>`;
                 }
-                return `<div style="padding:8px; border-left:3px solid var(--gold); margin-bottom:8px;">
-                    <div style="font-weight:600;">${e.mes} (${fecha})</div>
-                    <div style="color:var(--slate); font-size:11px;">${respuesta}</div>
-                </div>`;
+
+                const fechaStr = rpt && rpt.fecha ? new Date(rpt.fecha).toLocaleDateString('es-MX') : '';
+
+                return `
+                <div style="background:var(--panel2); border:1px solid var(--border); border-radius:12px; padding:20px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; flex-wrap:wrap; gap:8px;">
+                        <div>
+                            <div style="font-family:'Playfair Display', serif; font-size:20px; color:var(--gold); font-weight:700;">
+                                <i class="fa fa-user-tie"></i> ${escapeHtml(blk.coachName)}
+                            </div>
+                            <div style="font-size:11px; color:var(--slate);">${escapeHtml(blk.coachEmail)}</div>
+                        </div>
+                        <div style="text-align:right;">
+                            <div style="font-weight:700; color:var(--white); font-size:14px;">${escapeHtml(blk.mes)}</div>
+                            ${fechaStr ? `<div style="font-size:10px; color:var(--slate);">Enviado: ${fechaStr}</div>` : ''}
+                        </div>
+                    </div>
+
+                    ${rpt ? `
+                    <div style="display:grid; gap:14px; font-size:13px; line-height:1.55;">
+                        <div style="padding:12px; background:rgba(59,130,246,0.08); border-left:3px solid var(--blue); border-radius:6px;">
+                            <div style="font-weight:700; color:var(--blue); margin-bottom:6px;"><i class="fa fa-chart-line"></i> Análisis general del mes</div>
+                            <div style="white-space:pre-wrap;">${escapeHtml(rpt.analisis || '—')}</div>
+                        </div>
+                        <div style="padding:12px; background:rgba(239,68,68,0.08); border-left:3px solid var(--red); border-radius:6px;">
+                            <div style="font-weight:700; color:var(--red); margin-bottom:6px;"><i class="fa fa-triangle-exclamation"></i> Sospecha de fraude en actividad</div>
+                            <div style="white-space:pre-wrap;">${escapeHtml(rpt.agentes || '—')}</div>
+                        </div>
+                        <div style="padding:12px; background:rgba(16,185,129,0.08); border-left:3px solid var(--green); border-radius:6px;">
+                            <div style="font-weight:700; color:var(--green); margin-bottom:6px;"><i class="fa fa-handshake"></i> Compromisos del coach</div>
+                            <div style="white-space:pre-wrap;">${escapeHtml(rpt.compromisos || '—')}</div>
+                        </div>
+                        ${rpt.notas ? `
+                        <div style="padding:12px; background:rgba(148,163,184,0.08); border-left:3px solid var(--slate); border-radius:6px;">
+                            <div style="font-weight:700; color:var(--slate); margin-bottom:6px;"><i class="fa fa-note-sticky"></i> Notas adicionales</div>
+                            <div style="white-space:pre-wrap;">${escapeHtml(rpt.notas)}</div>
+                        </div>
+                        ` : ''}
+                    </div>
+                    ` : `<div style="color:var(--slate); font-style:italic; padding:10px 0;">Este coach no ha enviado reporte de ventas para ${escapeHtml(blk.mes)}.</div>`}
+
+                    <div style="margin-top:14px; padding:12px; background:rgba(212,175,55,0.08); border-left:3px solid var(--gold); border-radius:6px; font-size:13px; line-height:1.55;">
+                        <div style="font-weight:700; color:var(--gold); margin-bottom:8px;"><i class="fa fa-user-plus"></i> Reclutamiento</div>
+                        ${reclutamientoHtml}
+                    </div>
+                </div>
+                `;
             }).join('');
         }
 
-        window.handleReclutamientoQ1 = handleReclutamientoQ1;
-        window.saveReclutamiento = saveReclutamiento;
-        window.loadReclutamiento = loadReclutamiento;
-
         // ─── BOOT ─────────────────────────────────────────────────────────────────────
-        window.addEventListener('beforeunload', function (e) {
-            if (state.entries && state.entries.length > 0) {
-                e.preventDefault();
-                e.returnValue = '¿Descargaste tu archivo JSON? Los cambios recientes se perderán si cierras sin exportar el archivo.';
-            }
-        });
-
         window.refreshAll = refreshAll;
         window.switchTab = switchTab;
         window.toggleRed = toggleRed;
-        window.updateBitacoraCalendar = updateBitacoraCalendar;
-        window.updateWeekTable = updateWeekTable;
         window.renderCharts = renderCharts;
         window.renderKPIs = renderKPIs;
         window.renderLeaderboard = renderLeaderboard;
-        window.renderHistory = renderHistory;
-        window.autoLoadBitacora = autoLoadBitacora;
-        window.saveEntry = saveEntry;
-        window.loadEntryIntoForm = loadEntryIntoForm;
-        window.deleteEntry = deleteEntry;
-        window.clearForm = clearForm;
-        window.exportJSON = exportJSON;
-        window.importJSON = importJSON;
-        window.tryLoadReporte = tryLoadReporte;
-        window.saveReporte = saveReporte;
-        window.loadReporte = loadReporte;
-        window.renderReporteHistory = renderReporteHistory;
         window.refreshLeaderboardWeeks = refreshLeaderboardWeeks;
         window.refreshMonthFilters = refreshMonthFilters;
         window.initLeaderboardDefaults = initLeaderboardDefaults;
-        window.initBitacoraDefaults = initBitacoraDefaults;
-        window.addAgent = addAgent;
-        window.removeAgent = removeAgent;
+        window.refreshCoachFilters = refreshCoachFilters;
+        window.refreshChartAgents = refreshChartAgents;
+        window.renderCoachReportes = renderCoachReportes;
+        window.refreshCoachReporteMonthFilter = refreshCoachReporteMonthFilter;
         window.validateDay = validateDay;
         window.ratio = ratio;
         window.destroyChart = destroyChart;
