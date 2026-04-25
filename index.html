@@ -1112,21 +1112,14 @@
                     <label class="field-label">Nombre del Promotor</label>
                     <input type="text" id="inp-coach" placeholder="Tu nombre">
                 </div>
-                <div>
-                    <label class="field-label">Tu Código de Promotor (compártelo con tus coaches)</label>
-                    <input type="text" id="inp-teamcode" placeholder="Ej. TEAM-PROMOTOR-1">
-                    <p style="font-size:10px; color:var(--slate); margin-top:5px;">Los coaches ingresan este código en su webapp para vincularse a ti.</p>
-                </div>
-                <div>
-                    <label class="field-label">Código de tu Director</label>
-                    <input type="text" id="inp-directorcode" placeholder="Ej. TEAM-DIRECTOR">
-                    <p style="font-size:10px; color:var(--slate); margin-top:5px;">Ingresa el código de tu director para que pueda verte en su dashboard.</p>
+                <div style="background:rgba(212,175,55,0.07); border:1px solid rgba(212,175,55,0.2); border-radius:10px; padding:12px 14px;">
+                    <label class="field-label" style="margin-bottom:6px; display:block;">MI CLAVE DE PROMOTOR</label>
+                    <span id="disp-mycode" style="font-size:22px; font-weight:800; color:var(--gold); letter-spacing:6px;">—</span>
+                    <p style="font-size:10px; color:var(--slate); margin:4px 0 0;">Asignada por el director. Tus coaches se vinculan automáticamente con esta clave.</p>
                 </div>
                 <div>
                     <p class="section-label">Coaches en tu Equipo</p>
                     <div class="agent-list" id="agent-list"></div>
-                    <p style="font-size:10px; color:var(--slate); margin-top:5px;">Los coaches que ingresen tu código
-                        aparecerán aquí automáticamente.</p>
                 </div>
                 <button class="btn btn-green" onclick="saveConfig()"><i class="fa fa-floppy-disk"></i>Guardar
                     configuración</button>
@@ -1498,12 +1491,9 @@
         // ─── CONFIG ──────────────────────────────────────────────────────────────────
         window.openConfig = function () {
             const inpCoach = document.getElementById('inp-coach');
-            const inpTeam = document.getElementById('inp-teamcode');
-            const inpDirCode = document.getElementById('inp-directorcode');
             if (inpCoach) inpCoach.value = state.promoterName || '';
-            if (inpTeam) inpTeam.value = state.promotorCode || '';
-            // Show director code in 3rd field
-            if (inpDirCode) inpDirCode.value = state.directorCode || '';
+            const codeEl = document.getElementById('disp-mycode');
+            if (codeEl) codeEl.textContent = state.companyCode || state.promotorCode || '—';
             renderCoachList();
             document.getElementById('config-modal').classList.add('open');
         }
@@ -1533,8 +1523,6 @@
                 }
 
                 state.promoterName = document.getElementById('inp-coach').value.trim();
-                state.directorCode = document.getElementById('inp-directorcode').value.trim();
-                state.promotorCode = document.getElementById('inp-teamcode').value.trim();
 
                 await saveState();
                 startListeningCoaches();
