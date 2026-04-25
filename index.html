@@ -819,6 +819,7 @@
             <button class="tab-btn" onclick="switchTab('charts',this)"><i class="fa fa-chart-area"></i>
                 Tendencias</button>
             <button class="tab-btn" onclick="switchTab('reporte',this)"><i class="fa fa-file-lines"></i> Reportes de Coaches</button>
+            <button class="tab-btn" onclick="switchTab('mi-reporte',this)"><i class="fa fa-clipboard-list"></i> Mi Reporte</button>
         </div>
 
         <!-- ═══════════════════════════════ TAB: LEADERBOARD ═══════════════════════════════ -->
@@ -1086,6 +1087,85 @@
             </div>
         </div>
 
+        <!-- ═══════════════════ TAB: MI REPORTE ═══════════════════ -->
+        <div id="tab-mi-reporte" class="tab-panel">
+
+            <!-- Selector de mes/año -->
+            <div class="card" style="margin-bottom:20px;">
+                <p class="card-title"><i class="fa fa-calendar-check"></i> Reporte Mensual del Promotor</p>
+                <p style="font-size:12px;color:var(--slate);margin-bottom:16px;">Selecciona el mes y completa ambas secciones antes de guardar.</p>
+                <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;">
+                    <div>
+                        <label class="field-label">Mes</label>
+                        <select id="prpt-mes" onchange="tryLoadPromoterReporte()" style="min-width:130px;">
+                            <option value="">------</option>
+                            <option>Enero</option><option>Febrero</option><option>Marzo</option>
+                            <option>Abril</option><option>Mayo</option><option>Junio</option>
+                            <option>Julio</option><option>Agosto</option><option>Septiembre</option>
+                            <option>Octubre</option><option>Noviembre</option><option>Diciembre</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="field-label">Año</label>
+                        <select id="prpt-year" onchange="tryLoadPromoterReporte()" style="width:90px;">
+                            <option value="">----</option>
+                            <option>2026</option><option>2027</option><option>2028</option>
+                            <option>2029</option><option>2030</option><option>2031</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-green" onclick="savePromoterReporte()" style="margin-bottom:2px;">
+                        <i class="fa fa-floppy-disk"></i> Guardar reporte
+                    </button>
+                    <span id="prpt-msg" style="font-size:12px;color:var(--green);display:none;align-items:center;gap:6px;"><i class="fa fa-check"></i> Guardado</span>
+                </div>
+            </div>
+
+            <!-- SECCIÓN 1: RECLUTAMIENTO -->
+            <div class="card" style="margin-bottom:20px;">
+                <p class="card-title"><i class="fa fa-people-group"></i> Reclutamiento</p>
+                <div style="margin-bottom:20px;">
+                    <label class="field-label">¿Actualmente tienes en entrenamiento algún prospecto a agente que todavía no tenga clave?</label>
+                    <div style="display:flex;gap:10px;margin-top:10px;">
+                        <button class="btn btn-sm" onclick="handlePromoterReclQ1('si')" id="pBtn-recl-si" style="flex:1;">Sí</button>
+                        <button class="btn btn-sm" onclick="handlePromoterReclQ1('no')" id="pBtn-recl-no" style="flex:1;">Todavía no</button>
+                    </div>
+                </div>
+                <div id="precl-q2" style="display:none;margin-bottom:16px;">
+                    <label class="field-label">¿Cuántos tienes a tu cargo?</label>
+                    <input type="number" id="precl-cantidad" min="0" max="20" placeholder="Cantidad de prospectos" style="width:100%;">
+                </div>
+                <div id="precl-q3" style="display:none;margin-bottom:16px;">
+                    <label class="field-label">¿Cómo se llaman?</label>
+                    <textarea id="precl-nombres" rows="3" placeholder="Nombres separados por comas..."></textarea>
+                </div>
+                <div id="precl-q4" style="display:none;margin-bottom:16px;">
+                    <label class="field-label">¿Para cuándo los puedes formalizar como agentes con clave?</label>
+                    <textarea id="precl-compromiso" rows="2" placeholder="Describe tu compromiso..."></textarea>
+                </div>
+            </div>
+
+            <!-- SECCIÓN 2: VENTA DE CARRERA DE COACH -->
+            <div class="card">
+                <p class="card-title"><i class="fa fa-user-graduate"></i> Venta de Carrera de Coach</p>
+                <div style="margin-bottom:20px;">
+                    <label class="field-label">¿Tienes en mente a un agente para coach?</label>
+                    <div style="display:flex;gap:10px;margin-top:10px;">
+                        <button class="btn btn-sm" onclick="handlePromoterVentaQ1('si')" id="pBtn-venta-si" style="flex:1;">Sí</button>
+                        <button class="btn btn-sm" onclick="handlePromoterVentaQ1('no')" id="pBtn-venta-no" style="flex:1;">Todavía no</button>
+                    </div>
+                </div>
+                <div id="pventa-q2" style="display:none;margin-bottom:16px;">
+                    <label class="field-label">¿Cuál es su nombre?</label>
+                    <input type="text" id="pventa-nombre" placeholder="Nombre del agente...">
+                </div>
+                <div id="pventa-q3" style="display:none;margin-bottom:16px;">
+                    <label class="field-label">¿Para cuándo crees que lo puedes formalizar como coach?</label>
+                    <textarea id="pventa-cuando" rows="2" placeholder="Ej. Para marzo 2026..."></textarea>
+                </div>
+            </div>
+
+        </div>
+
     </div>
 
     <!-- RECL DETAIL MODAL -->
@@ -1316,6 +1396,8 @@
             if (docSnap.exists()) {
                 const data = docSnap.data();
                 state.promoterName = data.promoterName || data.coachName || user.displayName || '';
+                state.reclutamiento = data.reclutamiento || [];
+                state.ventaCarrera = data.ventaCarrera || [];
                 state.teamCode = data.teamCode || '';
                 state.promotorNum = data.promotorNum || null;
                 // promotorCode = what coaches use to link to this promoter
@@ -1531,6 +1613,7 @@
             if (name === 'kpis') renderKPIs();
             if (name === 'leaderboard') renderLeaderboard();
             if (name === 'reporte') renderCoachReportes();
+            if (name === 'mi-reporte') tryLoadPromoterReporte();
         }
 
         // ─── CONFIG ──────────────────────────────────────────────────────────────────
@@ -2520,6 +2603,143 @@
             }
         }
 
+        // ─── PROMOTER REPORT ──────────────────────────────────────────────────────────
+
+        function resetPromoterReclButtons() {
+            const si = document.getElementById('pBtn-recl-si');
+            const no = document.getElementById('pBtn-recl-no');
+            if (si) { si.style.opacity='1'; si.style.background=''; si.style.color=''; }
+            if (no) { no.style.opacity='1'; no.style.background=''; no.style.color=''; }
+            ['precl-q2','precl-q3','precl-q4'].forEach(id => {
+                const el = document.getElementById(id); if (el) el.style.display='none';
+            });
+        }
+
+        function resetPromoterVentaButtons() {
+            const si = document.getElementById('pBtn-venta-si');
+            const no = document.getElementById('pBtn-venta-no');
+            if (si) { si.style.opacity='1'; si.style.background=''; si.style.color=''; }
+            if (no) { no.style.opacity='1'; no.style.background=''; no.style.color=''; }
+            ['pventa-q2','pventa-q3'].forEach(id => {
+                const el = document.getElementById(id); if (el) el.style.display='none';
+            });
+        }
+
+        window.handlePromoterReclQ1 = function(val) {
+            const si = document.getElementById('pBtn-recl-si');
+            const no = document.getElementById('pBtn-recl-no');
+            if (val === 'si') {
+                si.style.opacity='0.5'; si.style.background='var(--green)'; si.style.color='#000';
+                no.style.opacity='1'; no.style.background=''; no.style.color='';
+                ['precl-q2','precl-q3','precl-q4'].forEach(id => document.getElementById(id).style.display='block');
+            } else {
+                no.style.opacity='0.5'; no.style.background='var(--red)'; no.style.color='#fff';
+                si.style.opacity='1'; si.style.background=''; si.style.color='';
+                ['precl-q2','precl-q3','precl-q4'].forEach(id => document.getElementById(id).style.display='none');
+            }
+        };
+
+        window.handlePromoterVentaQ1 = function(val) {
+            const si = document.getElementById('pBtn-venta-si');
+            const no = document.getElementById('pBtn-venta-no');
+            if (val === 'si') {
+                si.style.opacity='0.5'; si.style.background='var(--green)'; si.style.color='#000';
+                no.style.opacity='1'; no.style.background=''; no.style.color='';
+                ['pventa-q2','pventa-q3'].forEach(id => document.getElementById(id).style.display='block');
+            } else {
+                no.style.opacity='0.5'; no.style.background='var(--red)'; no.style.color='#fff';
+                si.style.opacity='1'; si.style.background=''; si.style.color='';
+                ['pventa-q2','pventa-q3'].forEach(id => document.getElementById(id).style.display='none');
+            }
+        };
+
+        window.tryLoadPromoterReporte = function() {
+            const mes = document.getElementById('prpt-mes')?.value;
+            const year = document.getElementById('prpt-year')?.value;
+            if (!mes || !year) return;
+            const mesStr = mes + ' ' + year;
+
+            // Load reclutamiento
+            resetPromoterReclButtons();
+            ['precl-cantidad','precl-nombres','precl-compromiso'].forEach(id => {
+                const el = document.getElementById(id); if (el) el.value = '';
+            });
+            const recl = (state.reclutamiento||[]).find(r => r.mes === mesStr);
+            if (recl) {
+                handlePromoterReclQ1(recl.q1);
+                if (recl.q1 === 'si') {
+                    const c = document.getElementById('precl-cantidad'); if (c) c.value = recl.q2||'';
+                    const n = document.getElementById('precl-nombres'); if (n) n.value = recl.q3||'';
+                    const k = document.getElementById('precl-compromiso'); if (k) k.value = recl.q4||'';
+                }
+            }
+
+            // Load ventaCarrera
+            resetPromoterVentaButtons();
+            ['pventa-nombre','pventa-cuando'].forEach(id => {
+                const el = document.getElementById(id); if (el) el.value = '';
+            });
+            const venta = (state.ventaCarrera||[]).find(v => v.mes === mesStr);
+            if (venta) {
+                handlePromoterVentaQ1(venta.q1);
+                if (venta.q1 === 'si') {
+                    const n = document.getElementById('pventa-nombre'); if (n) n.value = venta.q2||'';
+                    const k = document.getElementById('pventa-cuando'); if (k) k.value = venta.q3||'';
+                }
+            }
+        };
+
+        window.savePromoterReporte = async function() {
+            const mesVal  = document.getElementById('prpt-mes')?.value;
+            const yearVal = document.getElementById('prpt-year')?.value;
+            if (!mesVal) { alert('Selecciona el mes'); return; }
+            if (!yearVal) { alert('Selecciona el año'); return; }
+            const mes = mesVal + ' ' + yearVal;
+
+            // Leer reclutamiento
+            const si = document.getElementById('pBtn-recl-si');
+            const no = document.getElementById('pBtn-recl-no');
+            const reclQ1 = si?.style.opacity === '0.5' ? 'si' : (no?.style.opacity === '0.5' ? 'no' : null);
+            if (reclQ1 === null) { alert('Responde la pregunta de Reclutamiento'); return; }
+            const reclQ2 = document.getElementById('precl-cantidad')?.value.trim() || '';
+            const reclQ3 = document.getElementById('precl-nombres')?.value.trim() || '';
+            const reclQ4 = document.getElementById('precl-compromiso')?.value.trim() || '';
+            if (reclQ1 === 'si' && !reclQ2) { alert('Indica cuántos prospectos tienes'); return; }
+            if (reclQ1 === 'si' && !reclQ3) { alert('Escribe los nombres de los prospectos'); return; }
+            if (reclQ1 === 'si' && !reclQ4) { alert('Describe tu compromiso de formalización'); return; }
+
+            // Leer ventaCarrera
+            const vsi = document.getElementById('pBtn-venta-si');
+            const vno = document.getElementById('pBtn-venta-no');
+            const ventaQ1 = vsi?.style.opacity === '0.5' ? 'si' : (vno?.style.opacity === '0.5' ? 'no' : null);
+            if (ventaQ1 === null) { alert('Responde la pregunta de Venta de Carrera de Coach'); return; }
+            const ventaQ2 = document.getElementById('pventa-nombre')?.value.trim() || '';
+            const ventaQ3 = document.getElementById('pventa-cuando')?.value.trim() || '';
+            if (ventaQ1 === 'si' && !ventaQ2) { alert('Escribe el nombre del agente'); return; }
+            if (ventaQ1 === 'si' && !ventaQ3) { alert('Indica para cuándo puedes formalizarlo'); return; }
+
+            // Guardar en state
+            const reclEntry = { mes, q1: reclQ1, q2: reclQ1==='si'?reclQ2:'', q3: reclQ1==='si'?reclQ3:'', q4: reclQ1==='si'?reclQ4:'', fecha: new Date().toISOString() };
+            if (!state.reclutamiento) state.reclutamiento = [];
+            const ri = state.reclutamiento.findIndex(e => e.mes === mes);
+            if (ri >= 0) state.reclutamiento[ri] = reclEntry; else state.reclutamiento.push(reclEntry);
+
+            const ventaEntry = { mes, q1: ventaQ1, q2: ventaQ1==='si'?ventaQ2:'', q3: ventaQ1==='si'?ventaQ3:'', fecha: new Date().toISOString() };
+            if (!state.ventaCarrera) state.ventaCarrera = [];
+            const vi = state.ventaCarrera.findIndex(e => e.mes === mes);
+            if (vi >= 0) state.ventaCarrera[vi] = ventaEntry; else state.ventaCarrera.push(ventaEntry);
+
+            // Guardar en Firestore
+            try {
+                await setDoc(doc(db, 'promoters', user.email), {
+                    reclutamiento: state.reclutamiento,
+                    ventaCarrera: state.ventaCarrera
+                }, { merge: true });
+                const msg = document.getElementById('prpt-msg');
+                if (msg) { msg.style.display='inline-flex'; setTimeout(()=>msg.style.display='none', 2500); }
+            } catch(err) { alert('Error al guardar: ' + err.message); }
+        };
+
         // ─── BOOT ─────────────────────────────────────────────────────────────────────
         window.refreshAll = refreshAll;
         window.switchTab = switchTab;
@@ -2533,6 +2753,10 @@
         window.refreshCoachFilters = refreshCoachFilters;
         window.refreshChartAgents = refreshChartAgents;
         window.renderCoachReportes = renderCoachReportes;
+        window.tryLoadPromoterReporte = tryLoadPromoterReporte;
+        window.savePromoterReporte = savePromoterReporte;
+        window.handlePromoterReclQ1 = handlePromoterReclQ1;
+        window.handlePromoterVentaQ1 = handlePromoterVentaQ1;
         window.refreshCoachReporteMonthFilter = refreshCoachReporteMonthFilter;
         window.switchReporteSub = switchReporteSub;
         window.renderReclutamientoSection = renderReclutamientoSection;
