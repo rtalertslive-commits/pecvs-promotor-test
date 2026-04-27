@@ -802,6 +802,11 @@
                 </h1>
                 <p id="coach-display">Promotor: —</p>
                 <p id="team-display" style="font-size:10px; color:var(--gold); font-weight:700;">Equipo: Sin Código</p>
+                <div id="karma-badge" style="display:inline-flex;align-items:center;gap:6px;background:linear-gradient(135deg,rgba(212,175,55,0.18),rgba(212,175,55,0.06));border:1.5px solid rgba(212,175,55,0.5);border-radius:24px;padding:4px 14px 4px 10px;margin-top:4px;cursor:default;">
+                    <span style="font-size:18px;">⭐</span>
+                    <span id="karma-value" style="color:var(--gold);font-weight:800;font-size:20px;letter-spacing:1px;line-height:1;">0</span>
+                    <span style="color:var(--slate);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:2px;">karma</span>
+                </div>
             </div>
             <div class="header-right">
                 <button class="btn btn-sm" onclick="openConfig()"><i class="fa fa-cog"></i> Configuración</button>
@@ -1385,9 +1390,13 @@
             entries: [],
             coaches: [],        // [{email, coachName, agentTeamCode, reportes, reclutamiento}]
             coachesMap: {},     // {email -> coach data}
-            agentCoachMap: {}   // {agentName -> coachEmail}
+            agentCoachMap: {},  // {agentName -> coachEmail}
+            karma: 0,
+            karmaLog: []
         };
         let user = null;
+        let serverNow = null;
+        let pointsConfig = { promotorReportPoints: 1000 };
         let unsubListeners = []; // multiple listeners for each coach team
 
         // ─── AUTH LOGIC ──────────────────────────────────────────────────────────────
@@ -1496,6 +1505,8 @@
                 state.promoterName = data.promoterName || data.coachName || user.displayName || '';
                 state.reclutamiento = data.reclutamiento || [];
                 state.ventaCarrera = data.ventaCarrera || [];
+                state.karma = data.karma || 0;
+                state.karmaLog = data.karmaLog || [];
                 state.teamCode = data.teamCode || '';
                 state.promotorNum = data.promotorNum || null;
                 // promotorCode = what coaches use to link to this promoter
@@ -1682,7 +1693,10 @@
         }
 
         // ─── INIT ─────────────────────────────────────────────────────────────────────
-        window.init = function () {
+        window.init = async function () {
+            serverNow = await getServerTime();
+            await loadPointsConfig();
+            updateKarmaDisplay();
             refreshAll();
             initBitacora();
         }
@@ -2998,8 +3012,58 @@
                 }, { merge: true });
                 const msg = document.getElementById('prpt-msg');
                 if (msg) { msg.style.display='inline-flex'; setTimeout(()=>msg.style.display='none', 2500); }
+                await awardPromoterKarma(mes);
             } catch(err) { alert('Error al guardar: ' + err.message); }
         };
+
+        // ─── KARMA ────────────────────────────────────────────────────────────────────
+        async function getServerTime() {
+            try {
+                const r = await fetch('https://timeapi.io/api/time/current/zone?timeZone=America/Monterrey', { signal: AbortSignal.timeout(3000) });
+                const d = await r.json();
+                return new Date(d.year, d.month - 1, d.day, d.hour, d.minute, d.seconds);
+            } catch {}
+            try {
+                const r = await fetch('https://worldtimeapi.org/api/timezone/America/Monterrey', { signal: AbortSignal.timeout(3000) });
+                const { datetime } = await r.json();
+                return new Date(datetime);
+            } catch {}
+            return new Date();
+        }
+
+        async function loadPointsConfig() {
+            try {
+                const snap = await getDoc(doc(db, 'config', 'pointsConfig'));
+                if (snap.exists()) pointsConfig = { ...pointsConfig, ...snap.data() };
+            } catch (e) {}
+        }
+
+        function updateKarmaDisplay() {
+            const el = document.getElementById('karma-value');
+            if (el) el.textContent = (state.karma || 0).toLocaleString();
+        }
+
+        // Otorga karma al guardar reporte mensual. Solo una vez por mes.
+        async function awardPromoterKarma(mes) {
+            if (!serverNow) return;
+            const now = serverNow;
+            const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+            const currentMes = `${MESES[now.getMonth()]} ${now.getFullYear()}`;
+            const prevDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+            const prevMes = `${MESES[prevDate.getMonth()]} ${prevDate.getFullYear()}`;
+            if (mes !== currentMes && mes !== prevMes) {
+                alert(`Solo puedes reportar el mes actual (${currentMes}) o el mes anterior (${prevMes}).`);
+                return;
+            }
+            if ((state.karmaLog || []).some(k => k.mes === mes)) return; // ya contabilizado
+            const pts = (pointsConfig && pointsConfig.promotorReportPoints) || 1000;
+            state.karma = (state.karma || 0) + pts;
+            if (!state.karmaLog) state.karmaLog = [];
+            state.karmaLog.push({ mes, points: pts, fecha: new Date().toISOString() });
+            await setDoc(doc(db, 'promoters', user.email), { karma: state.karma, karmaLog: state.karmaLog }, { merge: true });
+            updateKarmaDisplay();
+            alert(`⭐ +${pts} Karma Points por el reporte de ${mes}! Saldo total: ${state.karma}`);
+        }
 
         // ─── BOOT ─────────────────────────────────────────────────────────────────────
         window.refreshAll = refreshAll;
