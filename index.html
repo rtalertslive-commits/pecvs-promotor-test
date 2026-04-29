@@ -1405,6 +1405,7 @@
             teamCode: '',      // code linking promoter → director (TEAM-DIRECTOR)
             promotorCode: '',  // code promoter shares with coaches (TEAM-PROMOTOR-X)
             promotorNum: null,
+            companyCode: '',
             directorCode: '',  // multi-tenant: código del director
             regionName: '',
             agents: [],
@@ -1416,7 +1417,6 @@
             karma: 0,
             karmaLog: []
         };
-        window._s = state; // debug helper
         let user = null;
         let serverNow = null;
         let pointsConfig = { promotorReportPoints: 1000 };
@@ -1566,6 +1566,7 @@
                 state.karma = data.karma || 0;
                 state.karmaLog = data.karmaLog || [];
                 state.teamCode = data.teamCode || '';
+                state.companyCode = data.companyCode || '';
                 state.promotorNum = data.promotorNum || null;
                 // promotorCode = what coaches use to link to this promoter
                 state.promotorCode = data.promotorCode || (state.promotorNum ? 'TEAM-PROMOTOR-' + state.promotorNum : '');
@@ -1977,39 +1978,6 @@
                     <span style="font-size:9px; color:var(--slate); text-transform:uppercase; letter-spacing:1px;">${c.email}</span>
                 </div>
             `).join('');
-        }
-
-        window.saveConfig = async function () {
-            try {
-                // Determine source element to show loading state if possible
-                const btn = (window.event && window.event.target && window.event.target.tagName === 'BUTTON') ? window.event.target : null;
-                const oldHtml = btn ? btn.innerHTML : '';
-                if (btn) {
-                    btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Guardando...';
-                    btn.disabled = true;
-                }
-
-                const ic = document.getElementById('inp-coach');
-                if (ic) state.promoterName = ic.value.trim(); // input ya no existe en perfil read-only
-
-                await saveState();
-                startListeningCoaches();
-                refreshAll();
-
-                if (btn) {
-                    btn.innerHTML = '<i class="fa fa-check"></i> ¡Guardado!';
-                    setTimeout(() => {
-                        btn.innerHTML = oldHtml;
-                        btn.disabled = false;
-                        closeConfig();
-                    }, 1000);
-                } else {
-                    closeConfig();
-                }
-            } catch (err) {
-                console.error("Error saving promoter:", err);
-                alert("Error al guardar: " + err.message);
-            }
         }
 
         function refreshCoachFilters() {
