@@ -1424,9 +1424,11 @@
             coaches: [],        // [{email, coachName, agentTeamCode, reportes, reclutamiento}]
             coachesMap: {},     // {email -> coach data}
             agentCoachMap: {},  // {agentName -> coachEmail}
+            embeddedCoaches: [], // fallback cache from promoter doc
             karma: 0,
             karmaLog: []
         };
+        window._s = state; // debug helper
         let user = null;
         let serverNow = null;
         let pointsConfig = { promotorReportPoints: 1000 };
