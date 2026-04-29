@@ -1447,6 +1447,14 @@
 
         onAuthStateChanged(auth, async (u) => {
             if (u) {
+                // Detectar cambio de usuario y forzar recarga (evita data leak en memoria)
+                const lastEmail = sessionStorage.getItem('lastPromEmail');
+                if (lastEmail && lastEmail !== u.email) {
+                    sessionStorage.setItem('lastPromEmail', u.email);
+                    location.reload();
+                    return;
+                }
+                sessionStorage.setItem('lastPromEmail', u.email);
                 user = u;
                 const status = await checkUserStatus();
                 if (status === 'active') {
@@ -1551,6 +1559,13 @@
 
         async function loadPromoterData() {
             if (!user) return;
+            // Limpiar arrays para evitar leak entre cuentas
+            state.coaches = [];
+            state.coachesMap = {};
+            state.agents = [];
+            state.agentCoachMap = {};
+            state.entries = [];
+            state.embeddedCoaches = [];
             const docRef = doc(db, "promoters", user.email);
             const docSnap = await getDoc(docRef);
             if (docSnap.exists()) {
