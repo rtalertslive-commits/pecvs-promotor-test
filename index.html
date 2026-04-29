@@ -1350,23 +1350,26 @@
     <div class="modal-overlay" id="config-modal">
         <div class="modal-box">
             <button class="modal-close" onclick="closeConfig()">&times;</button>
-            <h2><i class="fa fa-cog"></i> Configuración</h2>
-            <div style="display:flex;flex-direction:column;gap:20px;">
-                <div>
-                    <label class="field-label">Nombre del Promotor</label>
-                    <input type="text" id="inp-coach" placeholder="Tu nombre">
+            <h2><i class="fa fa-cog"></i> Mi Perfil</h2>
+            <p style="font-size:11px; color:var(--slate); margin:0 0 15px;">Si algún dato está incorrecto, contacta al director para que lo corrija.</p>
+            <div style="display:flex;flex-direction:column;gap:12px;">
+                <div style="background:rgba(212,175,55,0.07); border:1px solid rgba(212,175,55,0.2); border-radius:10px; padding:12px 14px;">
+                    <label class="field-label" style="margin-bottom:6px; display:block;">NOMBRE DEL PROMOTOR</label>
+                    <span id="disp-myname" style="font-size:16px; font-weight:700; color:#fff;">—</span>
                 </div>
                 <div style="background:rgba(212,175,55,0.07); border:1px solid rgba(212,175,55,0.2); border-radius:10px; padding:12px 14px;">
                     <label class="field-label" style="margin-bottom:6px; display:block;">MI CLAVE DE PROMOTOR</label>
                     <span id="disp-mycode" style="font-size:22px; font-weight:800; color:var(--gold); letter-spacing:6px;">—</span>
-                    <p style="font-size:10px; color:var(--slate); margin:4px 0 0;">Asignada por el director. Tus coaches se vinculan automáticamente con esta clave.</p>
+                    <p style="font-size:10px; color:var(--slate); margin:4px 0 0;">Tus coaches se vinculan automáticamente con esta clave.</p>
+                </div>
+                <div style="background:rgba(212,175,55,0.07); border:1px solid rgba(212,175,55,0.2); border-radius:10px; padding:12px 14px;">
+                    <label class="field-label" style="margin-bottom:6px; display:block;">MI REGIÓN</label>
+                    <span id="disp-myregion" style="font-size:16px; font-weight:700; color:#fff;">—</span>
                 </div>
                 <div>
                     <p class="section-label">Coaches en tu Equipo</p>
                     <div class="agent-list" id="agent-list"></div>
                 </div>
-                <button class="btn btn-green" onclick="saveConfig()"><i class="fa fa-floppy-disk"></i>Guardar
-                    configuración</button>
             </div>
         </div>
     </div>
@@ -1965,10 +1968,12 @@
 
         // ─── CONFIG ──────────────────────────────────────────────────────────────────
         window.openConfig = function () {
-            const inpCoach = document.getElementById('inp-coach');
-            if (inpCoach) inpCoach.value = state.promoterName || '';
+            const nameEl = document.getElementById('disp-myname');
             const codeEl = document.getElementById('disp-mycode');
-            if (codeEl) codeEl.textContent = state.companyCode || state.promotorCode || '—';
+            const regionEl = document.getElementById('disp-myregion');
+            if (nameEl)   nameEl.textContent   = state.promoterName || '—';
+            if (codeEl)   codeEl.textContent   = state.companyCode || state.promotorCode || '—';
+            if (regionEl) regionEl.textContent = state.regionName || '—';
             renderCoachList();
             document.getElementById('config-modal').classList.add('open');
         }
@@ -1997,7 +2002,8 @@
                     btn.disabled = true;
                 }
 
-                state.promoterName = document.getElementById('inp-coach').value.trim();
+                const ic = document.getElementById('inp-coach');
+                if (ic) state.promoterName = ic.value.trim(); // input ya no existe en perfil read-only
 
                 await saveState();
                 startListeningCoaches();
