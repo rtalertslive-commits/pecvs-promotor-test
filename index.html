@@ -148,12 +148,19 @@
             cursor: pointer;
             transition: .25s;
             white-space: nowrap;
+            -webkit-tap-highlight-color: transparent;
         }
 
-        .btn:hover {
-            background: var(--gold);
-            color: var(--bg);
+        /* Hover SOLO en dispositivos con cursor real. Sin esto, el touch en
+           mobile dispara :hover y se queda 'sticky' hasta el proximo tap. */
+        @media (hover: hover) and (pointer: fine) {
+            .btn:hover { background: var(--gold); color: var(--bg); }
+            .btn-green:hover { background: var(--green); color: #fff; }
+            .btn-red:hover { background: var(--red); color: #fff; }
+            .btn-blue:hover { background: var(--blue); color: #fff; }
         }
+
+        .btn:active { transform: scale(0.97); }
 
         .btn.active {
             background: var(--gold);
@@ -165,29 +172,14 @@
             color: var(--green);
         }
 
-        .btn-green:hover {
-            background: var(--green);
-            color: #fff;
-        }
-
         .btn-red {
             border-color: var(--red);
             color: var(--red);
         }
 
-        .btn-red:hover {
-            background: var(--red);
-            color: #fff;
-        }
-
         .btn-blue {
             border-color: var(--blue);
             color: var(--blue);
-        }
-
-        .btn-blue:hover {
-            background: var(--blue);
-            color: #fff;
         }
 
         .btn-sm {
@@ -1344,6 +1336,45 @@
         </div>
     </div>
 
+    <!-- LOGOUT CONFIRMATION MODAL -->
+    <div class="modal-overlay" id="logout-confirm-modal" onclick="if(event.target===this)cancelLogout()">
+        <div class="modal-box" style="max-width:340px;text-align:center;">
+            <div style="font-size:42px;margin-bottom:8px;">👋</div>
+            <h2 style="font-family:'Inter',sans-serif;font-weight:800;color:var(--white);margin:0 0 8px;font-size:18px;">¿Cerrar sesión?</h2>
+            <p style="color:var(--slate);font-size:13px;margin:0 0 20px;">Tendrás que volver a entrar con Google la próxima vez.</p>
+            <div style="display:flex;gap:10px;">
+                <button class="btn btn-sm" style="flex:1;" onclick="cancelLogout()">Cancelar</button>
+                <button class="btn btn-sm btn-red" style="flex:1;" onclick="confirmLogout()">Cerrar sesión</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- UPDATE AVAILABLE MODAL -->
+    <div class="modal-overlay" id="update-available-modal">
+        <div class="modal-box" style="max-width:340px;text-align:center;">
+            <div style="font-size:48px;margin-bottom:8px;">🚀</div>
+            <h2 style="font-family:'Inter',sans-serif;font-weight:800;color:var(--white);margin:0 0 8px;font-size:18px;">Nueva versión disponible</h2>
+            <p style="color:var(--slate);font-size:13px;margin:0 0 20px;line-height:1.5;">Recargá la app para obtener las últimas mejoras y arreglos.</p>
+            <div style="display:flex;gap:10px;">
+                <button class="btn btn-sm" style="flex:1;" onclick="dismissUpdate()">Después</button>
+                <button class="btn btn-sm btn-green" style="flex:1;" onclick="applyUpdate()">Recargar ahora</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- CANJE CONFIRMATION MODAL -->
+    <div class="modal-overlay" id="canje-confirm-modal" onclick="if(event.target===this)cancelCanje()">
+        <div class="modal-box" style="max-width:380px;text-align:center;">
+            <div style="font-size:42px;margin-bottom:8px;">🛒</div>
+            <h2 style="font-family:'Inter',sans-serif;font-weight:800;color:var(--white);margin:0 0 12px;font-size:18px;">Confirmar canje</h2>
+            <p id="canje-confirm-text" style="color:var(--slate);font-size:13px;margin:0 0 20px;line-height:1.5;"></p>
+            <div style="display:flex;gap:10px;">
+                <button class="btn btn-sm" style="flex:1;" onclick="cancelCanje()">Cancelar</button>
+                <button class="btn btn-sm btn-green" style="flex:1;" onclick="confirmCanje()">Solicitar</button>
+            </div>
+        </div>
+    </div>
+
     <!-- REGISTER OVERLAY -->
     <div id="register-overlay" style="display:none; position:fixed; inset:0; background:radial-gradient(circle at top right,#1e293b,#0f172a); z-index:10001; align-items:center; justify-content:center; flex-direction:column; padding:20px;">
         <div class="login-card" style="max-width:420px;">
@@ -1483,7 +1514,47 @@
         });
 
         window.logout = function () {
-            if (confirm("¿Cerrar sesión?")) signOut(auth);
+            // Modal custom — confirm() nativo no se ve bien dentro de PWA standalone iOS
+            document.getElementById('logout-confirm-modal').classList.add('open');
+        };
+        window.confirmLogout = function () {
+            document.getElementById('logout-confirm-modal').classList.remove('open');
+            signOut(auth).then(() => location.reload());
+        };
+        window.cancelLogout = function () {
+            document.getElementById('logout-confirm-modal').classList.remove('open');
+        };
+
+        // Update prompt modal (reemplaza confirm() del SW)
+        let _updateModalShown = false;
+        window.showUpdateModal = function () {
+            if (_updateModalShown) return;
+            _updateModalShown = true;
+            document.getElementById('update-available-modal').classList.add('open');
+        };
+        window.applyUpdate = function () { location.reload(); };
+        window.dismissUpdate = function () {
+            document.getElementById('update-available-modal').classList.remove('open');
+        };
+
+        // Canje confirm modal (reemplaza confirm() de promotorSolicitarCanje)
+        let _pendingCanje = null;
+        window.openCanjeConfirm = function (itemId, itemNombre, costo, emoji, catalogDoc) {
+            _pendingCanje = { itemId, itemNombre, costo, emoji, catalogDoc };
+            document.getElementById('canje-confirm-text').textContent =
+                `¿Solicitar canje de "${itemNombre}" por 🌮 ${costo} tacos? Se descontarán si el director aprueba.`;
+            document.getElementById('canje-confirm-modal').classList.add('open');
+        };
+        window.confirmCanje = async function () {
+            const c = _pendingCanje;
+            document.getElementById('canje-confirm-modal').classList.remove('open');
+            _pendingCanje = null;
+            if (!c) return;
+            await window._doSolicitarCanje(c.itemId, c.itemNombre, c.costo, c.emoji, c.catalogDoc);
+        };
+        window.cancelCanje = function () {
+            document.getElementById('canje-confirm-modal').classList.remove('open');
+            _pendingCanje = null;
         };
 
         window.doSignOut = function () {
@@ -1588,16 +1659,21 @@
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('sw.js').then(reg => {
-                    reg.onupdatefound = () => {
+                    // Modal custom + addEventListener (más robusto que asignación directa)
+                    reg.addEventListener('updatefound', () => {
                         const newSW = reg.installing;
-                        newSW.onstatechange = () => {
+                        if (!newSW) return;
+                        newSW.addEventListener('statechange', () => {
                             if (newSW.state === 'installed' && navigator.serviceWorker.controller) {
-                                if (confirm('Nueva versión disponible (v1.3.7). ¿Recargar ahora para actualizar?')) {
-                                    window.location.reload();
-                                }
+                                showUpdateModal();
                             }
-                        };
-                    };
+                        });
+                    });
+                    // Force check de updates al volver foco + cada hora
+                    document.addEventListener('visibilitychange', () => {
+                        if (document.visibilityState === 'visible') reg.update().catch(() => {});
+                    });
+                    setInterval(() => reg.update().catch(() => {}), 60 * 60 * 1000);
                 }).catch(err => console.error('SW registration failed:', err));
             });
         }
@@ -1827,7 +1903,7 @@
             if (!sel) return;
             const prev = sel.value;
             sel.innerHTML = '<option value="">— Todos los coaches —</option>' +
-                state.coaches.map(c => `<option value="${c.email}">${c.coachName || c.email}</option>`).join('');
+                state.coaches.map(c => `<option value="${escapeHtml(c.email)}">${escapeHtml(c.coachName || c.email)}</option>`).join('');
             if (prev) sel.value = prev;
             refreshBitAgentSelect();
         }
@@ -1840,7 +1916,7 @@
                 ? getBitAgentList().filter(a => getBitAgentCoach(a) === coachF)
                 : getBitAgentList();
             sel.innerHTML = '<option value="">— Selecciona agente —</option>' +
-                agents.map(a => `<option value="${a}">${a}</option>`).join('');
+                agents.map(a => `<option value="${escapeHtml(a)}">${escapeHtml(a)}</option>`).join('');
             sel.value = agents.includes(prev) ? prev : '';
             autoLoadBit();
         };
@@ -1950,9 +2026,9 @@
             grid.innerHTML = filtered.map(e => {
                 const origIdx = state.entries.indexOf(e);
                 return `<div class="history-chip" onclick="loadBitEntry(${origIdx})">
-                  <span style="font-weight:700;color:var(--gold)">${e.agent}</span>
-                  <span style="color:var(--slate)">${e.mes} · Sem ${e.semana}</span>
-                  <span style="color:var(--teal);font-size:11px;">P:${e.totales?.P||0} E:${e.totales?.E||0} V:${e.totales?.V||0}</span>
+                  <span style="font-weight:700;color:var(--gold)">${escapeHtml(e.agent)}</span>
+                  <span style="color:var(--slate)">${escapeHtml(e.mes)} · Sem ${escapeHtml(e.semana)}</span>
+                  <span style="color:var(--teal);font-size:11px;">P:${Number(e.totales?.P)||0} E:${Number(e.totales?.E)||0} V:${Number(e.totales?.V)||0}</span>
                 </div>`;
             }).join('');
         };
@@ -2029,8 +2105,8 @@
             if (!state.coaches.length) { el.innerHTML = '<div style="color:var(--slate);font-size:11px;padding:8px 0;">No hay coaches vinculados con este código de equipo todavía.</div>'; return; }
             el.innerHTML = state.coaches.map((c) => `
                 <div class="agent-chip" style="justify-content:space-between; padding:10px 15px;">
-                    <span style="font-weight:600;"><i class="fa fa-user-tie" style="color:var(--gold); margin-right:8px;"></i>${c.coachName}</span>
-                    <span style="font-size:9px; color:var(--slate); text-transform:uppercase; letter-spacing:1px;">${c.email}</span>
+                    <span style="font-weight:600;"><i class="fa fa-user-tie" style="color:var(--gold); margin-right:8px;"></i>${escapeHtml(c.coachName)}</span>
+                    <span style="font-size:9px; color:var(--slate); text-transform:uppercase; letter-spacing:1px;">${escapeHtml(c.email)}</span>
                 </div>
             `).join('');
         }
@@ -2040,7 +2116,7 @@
             const opts = state.coaches
                 .slice()
                 .sort((a, b) => (a.coachName || '').localeCompare(b.coachName || ''))
-                .map(c => `<option value="${c.email}">${c.coachName}</option>`).join('');
+                .map(c => `<option value="${escapeHtml(c.email)}">${escapeHtml(c.coachName)}</option>`).join('');
 
             ['lb-coach-filter', 'kpi-coach-sel', 'chart-coach-sel', 'rpt-coach-filter'].forEach(id => {
                 const el = document.getElementById(id);
@@ -2062,7 +2138,7 @@
             const opts = agentsForCoach
                 .slice()
                 .sort((a, b) => a.localeCompare(b))
-                .map(a => `<option value="${a}">${a}</option>`).join('');
+                .map(a => `<option value="${escapeHtml(a)}">${escapeHtml(a)}</option>`).join('');
             const el = document.getElementById('chart-agent-sel');
             if (!el) return;
             const cur = el.value;
@@ -2305,7 +2381,7 @@
                 const totalPrimaFmt = (d.prima + d.redPrima).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
                 return `<tr>
                     <td class="rank-num">${i + 1}</td>
-                    <td class="agent-name-cell">${ag}</td>
+                    <td class="agent-name-cell">${escapeHtml(ag)}</td>
                     <td style="border-left:2px solid #475569">${d.P}</td><td>${d.E}</td><td>${d.C}</td><td>${d.V}</td><td>${d.S}</td>
                     <td class="ratio-cell" style="border-left:2px solid #475569">${ratioPct(d.E, d.P)}</td>
                     <td class="ratio-cell">${ratioPct(d.C, d.E)}</td>
@@ -3161,13 +3237,21 @@
                 container.innerHTML = items.map(item => {
                     const puedo = (state.karma || 0) >= item.costo;
                     const sinStock = item.stock === 0;
+                    // Escapar todos los strings de Firestore (catalogo controlado por director)
+                    // antes de inyectar en innerHTML / atributos onclick
+                    const eEmoji = escapeHtml(item.emoji || '🎁');
+                    const eNombre = escapeHtml(item.nombre || '');
+                    const eDesc = escapeHtml(item.descripcion || '');
+                    const eId = escapeHtml(item.id || '');
+                    const eCatalog = escapeHtml(catalogId);
+                    const costoNum = Number(item.costo) || 0;
                     return `<div style="background:var(--panel2);border-radius:12px;padding:16px;border:1px solid rgba(212,175,55,0.15);display:flex;flex-direction:column;gap:8px;">
-                        <div style="font-size:36px;text-align:center;">${item.emoji||'🎁'}</div>
-                        <div style="font-weight:700;font-size:14px;text-align:center;">${item.nombre}</div>
-                        <div style="font-size:12px;color:var(--slate);text-align:center;">${item.descripcion||''}</div>
-                        <div style="text-align:center;font-weight:800;color:var(--gold);">🌮 ${item.costo} tacos</div>
-                        ${item.stock >= 0 ? `<div style="text-align:center;font-size:11px;color:var(--slate);">Stock: ${item.stock}</div>` : ''}
-                        <button class="btn btn-sm ${puedo&&!sinStock?'btn-green':''}" ${(!puedo||sinStock)?'disabled':''} onclick="promotorSolicitarCanje('${item.id}','${item.nombre}',${item.costo},'${item.emoji||'🎁'}','${catalogId}')">
+                        <div style="font-size:36px;text-align:center;">${eEmoji}</div>
+                        <div style="font-weight:700;font-size:14px;text-align:center;">${eNombre}</div>
+                        <div style="font-size:12px;color:var(--slate);text-align:center;">${eDesc}</div>
+                        <div style="text-align:center;font-weight:800;color:var(--gold);">🌮 ${costoNum} tacos</div>
+                        ${item.stock >= 0 ? `<div style="text-align:center;font-size:11px;color:var(--slate);">Stock: ${Number(item.stock)||0}</div>` : ''}
+                        <button class="btn btn-sm ${puedo&&!sinStock?'btn-green':''}" ${(!puedo||sinStock)?'disabled':''} onclick="promotorSolicitarCanje('${eId}','${eNombre}',${costoNum},'${eEmoji}','${eCatalog}')">
                             ${sinStock ? 'Sin stock' : !puedo ? 'Tacos insuficientes' : '🛒 Solicitar canje'}
                         </button>
                     </div>`;
@@ -3185,10 +3269,13 @@
                 container.innerHTML = reqs.length ? reqs.map(r => {
                     const color = r.status==='approved'?'var(--green)':r.status==='rejected'?'var(--red)':'var(--orange)';
                     const label = r.status==='approved'?'✓ Aprobado':r.status==='rejected'?'✗ Rechazado':'⏳ Pendiente';
+                    const eEmoji = escapeHtml(r.emoji || '🎁');
+                    const eName = escapeHtml(r.itemNombre || '');
+                    const costoNum = Number(r.costo) || 0;
                     return `<div style="padding:10px 14px;background:var(--panel);border-radius:8px;border-left:3px solid ${color};display:flex;justify-content:space-between;align-items:center;gap:8px;">
                         <div>
-                            <div style="font-weight:600;font-size:13px;">${r.emoji||'🎁'} ${r.itemNombre}</div>
-                            <div style="font-size:11px;color:var(--slate);">🌮 ${r.costo} tacos &nbsp;·&nbsp; ${new Date(r.fechaSolicitud).toLocaleDateString('es-MX')}</div>
+                            <div style="font-weight:600;font-size:13px;">${eEmoji} ${eName}</div>
+                            <div style="font-size:11px;color:var(--slate);">🌮 ${costoNum} tacos &nbsp;·&nbsp; ${new Date(r.fechaSolicitud).toLocaleDateString('es-MX')}</div>
                         </div>
                         <span style="color:${color};font-size:11px;font-weight:700;white-space:nowrap;">${label}</span>
                     </div>`;
@@ -3208,11 +3295,15 @@
                 container.innerHTML = reqs.length ? reqs.map(r => {
                     const color = r.status==='approved'?'var(--green)':r.status==='rejected'?'var(--red)':'var(--orange)';
                     const label = r.status==='approved'?'✓ Aprobado':r.status==='rejected'?'✗ Rechazado':'⏳ Pendiente';
+                    const eEmoji = escapeHtml(r.emoji || '🎁');
+                    const eName = escapeHtml(r.itemNombre || '');
+                    const eSol = escapeHtml(r.nombreSolicitante || r.emailSolicitante || '');
+                    const costoNum = Number(r.costo) || 0;
                     return `<div style="padding:10px 14px;background:var(--panel);border-radius:8px;border-left:3px solid ${color};display:flex;justify-content:space-between;align-items:center;gap:8px;">
                         <div>
-                            <div style="font-weight:600;font-size:13px;">${r.emoji||'🎁'} ${r.itemNombre}</div>
-                            <div style="font-size:12px;color:var(--white);margin-top:1px;">${r.nombreSolicitante||r.emailSolicitante}</div>
-                            <div style="font-size:11px;color:var(--slate);">🌮 ${r.costo} tacos &nbsp;·&nbsp; ${new Date(r.fechaSolicitud).toLocaleDateString('es-MX')}</div>
+                            <div style="font-weight:600;font-size:13px;">${eEmoji} ${eName}</div>
+                            <div style="font-size:12px;color:var(--white);margin-top:1px;">${eSol}</div>
+                            <div style="font-size:11px;color:var(--slate);">🌮 ${costoNum} tacos &nbsp;·&nbsp; ${new Date(r.fechaSolicitud).toLocaleDateString('es-MX')}</div>
                         </div>
                         <span style="color:${color};font-size:11px;font-weight:700;white-space:nowrap;">${label}</span>
                     </div>`;
@@ -3220,9 +3311,15 @@
             } catch(e) { container.innerHTML = '<div class="empty-state">Error cargando compras del equipo.</div>'; }
         }
 
-        window.promotorSolicitarCanje = async function(itemId, itemNombre, costo, emoji, catalogDoc) {
+        // Entry point del botón de canje (abre modal custom; el confirm real se hace
+        // desde confirmCanje cuando el usuario aprueba el modal)
+        window.promotorSolicitarCanje = function(itemId, itemNombre, costo, emoji, catalogDoc) {
             if ((state.karma || 0) < costo) { alert('Tacos insuficientes.'); return; }
-            if (!confirm(`¿Solicitar canje de "${itemNombre}" por 🌮 ${costo} tacos? Los tacos se descontarán si el director aprueba.`)) return;
+            openCanjeConfirm(itemId, itemNombre, costo, emoji, catalogDoc);
+        };
+
+        // Lógica real de solicitar canje. Llamada desde confirmCanje (modal).
+        window._doSolicitarCanje = async function(itemId, itemNombre, costo, emoji, catalogDoc) {
             try {
                 await addDoc(collection(db, 'redemptionRequests'), {
                     emailSolicitante: user.email,

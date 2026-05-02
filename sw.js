@@ -1,5 +1,9 @@
-const CACHE_NAME = 'pecvs-promotor-v1.5.4';
-const assets = ['./', './index.html'];
+const CACHE_NAME = 'pecvs-promotor-v1.6.0';
+const assets = [
+    './',
+    './index.html',
+    './manifest.json'
+];
 
 self.addEventListener('install', e => {
     self.skipWaiting();
