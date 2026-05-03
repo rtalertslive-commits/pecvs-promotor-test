@@ -1576,6 +1576,7 @@
                 if (status === 'active') {
                     document.getElementById('login-overlay').classList.add('hidden');
                     await loadPromoterData();
+                    startPromoterDocListener(); // real-time updates desde Firestore
                     init();
                 } else if (status === 'inactive') {
                     document.getElementById('login-overlay').classList.add('hidden');
@@ -1713,6 +1714,51 @@
                 state.promoterName = user.displayName || '';
                 openConfig();
             }
+        }
+
+        // ─── REAL-TIME LISTENER del doc del promotor ────────────────────────────
+        // Escucha cambios en promoters/{email}: el director puede aprobar/rechazar canjes,
+        // mintar/quemar tacos via Tesorería, reasignar director, marcar inactive, etc.
+        // Sin este listener el promotor no se enteraba hasta cerrar y reabrir.
+        let _promoterDocUnsubscribe = null;
+        function startPromoterDocListener() {
+            if (!user) return;
+            if (_promoterDocUnsubscribe) { _promoterDocUnsubscribe(); _promoterDocUnsubscribe = null; }
+
+            _promoterDocUnsubscribe = onSnapshot(doc(db, "promoters", user.email), (snap) => {
+                if (!snap.exists()) return;
+                const fresh = snap.data();
+                let karmaChanged = false;
+
+                if (typeof fresh.karma === 'number' && fresh.karma !== state.karma) {
+                    state.karma = fresh.karma;
+                    karmaChanged = true;
+                }
+                if (Array.isArray(fresh.karmaLog) && fresh.karmaLog.length !== (state.karmaLog || []).length) {
+                    state.karmaLog = fresh.karmaLog;
+                    karmaChanged = true;
+                }
+                // Reflejar campos admin en local (NO los escribimos via savePromoterData)
+                ['promoterName','teamCode','promotorCode','directorCode','regionName','companyCode','status','type'].forEach(k => {
+                    if (fresh[k] !== undefined && fresh[k] !== state[k]) state[k] = fresh[k];
+                });
+
+                if (karmaChanged && typeof updateKarmaDisplay === 'function') updateKarmaDisplay();
+
+                // Status change → mostrar revoked overlay
+                if (fresh.status === 'inactive' || fresh.status === 'revoked') {
+                    const overlay = document.getElementById('revoked-overlay');
+                    if (overlay) overlay.style.display = 'flex';
+                }
+
+                // Refresh tienda solicitudes si está activa
+                const tiendaActive = document.getElementById('tab-tienda')?.classList.contains('active');
+                if (tiendaActive) {
+                    try { renderPromotorMisSolicitudes(); } catch(e) {}
+                }
+            }, (err) => {
+                console.error('[promoterDocListener]', err);
+            });
         }
 
         async function savePromoterData() {
