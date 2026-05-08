@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PECVS$ — Promotor Analytics</title>
+    <title>PECS$ — Promotor Analytics</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link
         href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@700&display=swap"
@@ -806,7 +806,7 @@
     <div id="login-overlay" class="login-overlay">
         <div class="login-card">
             <div style="font-size: 50px; margin-bottom: 20px;">📋</div>
-            <h1>PECVS$ Analytics Hub</h1>
+            <h1>PECS$ Analytics Hub</h1>
             <p>Acceso exclusivo para Coaches y Supervisores. Gestiona tu equipo en tiempo real desde la nube.</p>
             <button id="login-btn" class="btn btn-blue"
                 style="width:100%; justify-content:center; padding:15px; border-radius:12px;">
@@ -823,7 +823,7 @@
         <!-- HEADER -->
         <div class="header">
             <div class="header-left">
-                <h1><i class="fa-solid fa-chart-line" style="font-size:22px;margin-right:10px;"></i>PECVS$ Analytics
+                <h1><i class="fa-solid fa-chart-line" style="font-size:22px;margin-right:10px;"></i>PECS$ Analytics
                     <small style="font-size:10px; color:var(--slate);" data-app-version>—</small>
                 </h1>
                 <p id="coach-display">Promotor: —</p>
@@ -1483,7 +1483,7 @@
                 const match = text.match(/CACHE_NAME\s*=\s*['"`][^'"`]*?v(\d+\.\d+\.\d+)['"`]/);
                 if (!match) return;
                 const v = 'v' + match[1];
-                document.title = 'PECVS$ — Promotor Analytics ' + v;
+                document.title = 'PECS$ — Promotor Analytics ' + v;
                 document.querySelectorAll('[data-app-version]').forEach(el => {
                     el.textContent = v;
                 });
