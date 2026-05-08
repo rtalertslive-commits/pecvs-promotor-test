@@ -984,6 +984,10 @@
                         <h3><i class="fa fa-bullseye"></i> Eficiencia: Conversión E ➔ C</h3>
                         <div class="chart-wrap"><canvas id="kpiRatioCE"></canvas></div>
                     </div>
+                    <div class="chart-card">
+                        <h3><i class="fa fa-bullseye"></i> Eficiencia: Conversión C ➔ S (Solicitud)</h3>
+                        <div class="chart-wrap"><canvas id="kpiRatioCS"></canvas></div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -2346,7 +2350,6 @@
             const errors = [];
             if (d.P < d.E) errors.push("Contactos (P) < Entrevistas (E)");
             if (d.E < d.C) errors.push("Entrevistas (E) < Cotizaciones (C)");
-            if (d.C < d.S) errors.push("Cotizaciones (C) < Solicitudes (S)");
             if (d.S > d.C * 2) errors.push("Solicitudes (S) > Doble de Cotizaciones (2C)");
             if (d.S > 0 && d.prima < 1) errors.push("Debe ingresar Prima ($) si hay solicitudes");
             // Regla inversa: si hay prima debe haber al menos 1 solicitud (sin esto el embudo
@@ -2830,7 +2833,8 @@
             // Ratios de Embudo (en porcentaje 0-100)
             const ratios = [
                 { id: 'kpiRatioEP', label: 'Eficiencia P → E', top: 'E', bot: 'P', color: CHART_COLORS.E },
-                { id: 'kpiRatioCE', label: 'Eficiencia E → C', top: 'C', bot: 'E', color: CHART_COLORS.C }
+                { id: 'kpiRatioCE', label: 'Eficiencia E → C', top: 'C', bot: 'E', color: CHART_COLORS.C },
+                { id: 'kpiRatioCS', label: 'Eficiencia C → S', top: 'S', bot: 'C', color: CHART_COLORS.S }
             ];
 
             ratios.forEach(r => {
