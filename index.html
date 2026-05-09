@@ -2638,6 +2638,9 @@
             document.getElementById('tab-' + name).classList.add('active');
             // Activar el botón correspondiente en ambos navs (matched por data-tab)
             document.querySelectorAll(`[data-tab="${name}"]`).forEach(b => b.classList.add('active'));
+            // Refrescar karma badge en cada nav — fix bug "no me salen los totopos
+            // hasta que paso a la tienda" (race entre loadPromotorData y listener)
+            if (typeof updateKarmaDisplay === 'function') updateKarmaDisplay();
             if (name === 'charts') renderCharts();
             if (name === 'kpis') renderKPIs();
             if (name === 'leaderboard') renderLeaderboard();
