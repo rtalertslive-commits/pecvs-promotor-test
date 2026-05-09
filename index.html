@@ -286,28 +286,60 @@
             background: rgba(212, 175, 55, 0.1);
         }
         .lb-team-total {
-            background: rgba(15, 23, 42, 0.92);
-            border: 1px solid rgba(212, 175, 55, 0.35);
-            border-radius: 12px;
-            padding: 14px 16px;
-            margin-bottom: 12px;
+            background: linear-gradient(135deg, rgba(20, 30, 48, 0.98) 0%, rgba(36, 28, 18, 0.95) 100%);
+            border: 1.5px solid var(--gold);
+            border-radius: 14px;
+            padding: 16px 18px;
+            margin-bottom: 14px;
             position: sticky; top: 0; z-index: 10;
             backdrop-filter: blur(8px);
             -webkit-backdrop-filter: blur(8px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35),
+                        0 0 0 1px rgba(212, 175, 55, 0.15),
+                        inset 0 1px 0 rgba(255, 255, 255, 0.05);
         }
         .lb-team-total-title {
-            font-size: 11px; color: var(--gold);
-            font-weight: 700; letter-spacing: 1.5px;
-            margin-bottom: 8px;
+            font-family: 'Playfair Display', serif;
+            font-size: 15px; color: var(--gold);
+            font-weight: 700; letter-spacing: 2.5px;
+            margin: 0 0 12px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(212, 175, 55, 0.25);
+            text-align: center;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
         }
         .lb-team-total-main {
-            display: flex; justify-content: space-between;
-            font-size: 15px; font-weight: 700; color: var(--white);
-            margin-bottom: 6px;
+            display: grid; grid-template-columns: 1fr 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 12px;
         }
-        .lb-team-total-main strong { color: var(--gold); }
+        .lb-team-total-main > div { text-align: center; }
+        .lb-team-total-main .label {
+            font-size: 9px;
+            color: var(--slate);
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            margin-bottom: 4px;
+        }
+        .lb-team-total-main .value {
+            font-size: 17px;
+            font-weight: 800;
+            color: var(--gold);
+            line-height: 1.1;
+            font-variant-numeric: tabular-nums;
+        }
+        @media (max-width: 360px) {
+            .lb-team-total-main .value { font-size: 14px; }
+        }
         .lb-team-total-sub {
-            font-size: 12px; color: var(--slate); margin-top: 4px;
+            font-size: 12px; color: var(--slate);
+            text-align: center;
+            padding-top: 8px;
+            border-top: 1px dashed rgba(212, 175, 55, 0.2);
+        }
+        .lb-team-total-sub + .lb-team-total-sub {
+            border-top: none; padding-top: 4px;
         }
         .lb-team-total-sub strong { color: var(--white); font-weight: 700; }
         .lb-mobile-row {
@@ -1074,6 +1106,7 @@
                     <div class="lb-sort">
                         <button class="lb-sort-btn active" data-sort="prima" onclick="setMobileLbSort('prima')">Prima ↓</button>
                         <button class="lb-sort-btn" data-sort="S" onclick="setMobileLbSort('S')">S ↓</button>
+                        <button class="lb-sort-btn" data-sort="P" onclick="setMobileLbSort('P')">P ↓</button>
                     </div>
                     <div id="lb-mobile-team-total"></div>
                     <div id="lb-mobile-rows"></div>
@@ -2609,7 +2642,7 @@
         // ─── MOBILE LEADERBOARD STATE ───────────────────────────────────────────────
         // El leaderboard mobile usa una vista alternativa con team-total sticky + cards
         // expandibles. Suma TODO (válido + rojo) sin distinción para simplificar.
-        let mobileLbSort = 'prima';  // 'prima' | 'S' | 'V'
+        let mobileLbSort = 'prima';  // 'prima' | 'S' | 'P'
         window.setMobileLbSort = function (key) {
             mobileLbSort = key;
             document.querySelectorAll('.lb-sort-btn').forEach(b => {
@@ -2847,12 +2880,23 @@
             const dolPerV = tot.V > 0 ? '$' + (tot.prima / tot.V).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '—';
             const dolPerInt = numAgents > 0 ? '$' + (tot.prima / numAgents).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '—';
 
+            const totPrimaCompact = tot.prima.toLocaleString('es-MX', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
             totalEl.innerHTML = `
                 <div class="lb-team-total">
-                    <div class="lb-team-total-title">EQUIPO TOTAL</div>
+                    <div class="lb-team-total-title"><i class="fa fa-trophy"></i> EQUIPO TOTAL</div>
                     <div class="lb-team-total-main">
-                        <div>S: <strong>${tot.S}</strong></div>
-                        <div>Prima: <strong>$${totPrimaFmt}</strong></div>
+                        <div>
+                            <div class="label">P · Prosp.</div>
+                            <div class="value">${tot.P}</div>
+                        </div>
+                        <div>
+                            <div class="label">S · Solic.</div>
+                            <div class="value">${tot.S}</div>
+                        </div>
+                        <div>
+                            <div class="label">Prima ($)</div>
+                            <div class="value">$${totPrimaCompact}</div>
+                        </div>
                     </div>
                     <div class="lb-team-total-sub">Eficiencia P → V: <strong>${efPV}</strong></div>
                     <div class="lb-team-total-sub">$/V: <strong>${dolPerV}</strong>  ·  $/Integrante: <strong>${dolPerInt}</strong></div>
@@ -2875,6 +2919,7 @@
                             <div class="lb-chevron"><i class="fa fa-chevron-down"></i></div>
                         </div>
                         <div class="lb-mobile-row-stats">
+                            <div>P: <strong>${d.P}</strong></div>
                             <div>S: <strong>${d.S}</strong></div>
                             <div>Prima: <strong>$${primaFmt}</strong></div>
                         </div>
