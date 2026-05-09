@@ -226,6 +226,166 @@
             display: block;
         }
 
+        /* ═══ BOTTOM NAV (mobile only, estilo iOS/Android) ═══ */
+        .bottom-nav { display: none; }
+        @media (max-width: 767px) {
+            .tab-nav { display: none; }
+            body { padding-bottom: calc(76px + env(safe-area-inset-bottom, 0px)); }
+            .bottom-nav {
+                display: flex;
+                position: fixed;
+                bottom: 0; left: 0; right: 0;
+                background: rgba(2, 6, 23, 0.92);
+                border-top: 1px solid var(--border);
+                padding: 8px 4px calc(10px + env(safe-area-inset-bottom, 0px));
+                backdrop-filter: blur(10px);
+                -webkit-backdrop-filter: blur(10px);
+                z-index: 100;
+            }
+        }
+        .bottom-nav .bn-btn {
+            flex: 1; background: none; border: none;
+            color: var(--slate); cursor: pointer; text-align: center;
+            padding: 6px 2px;
+            display: flex; flex-direction: column; align-items: center; gap: 3px;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .bottom-nav .bn-btn i {
+            font-size: 19px; line-height: 1;
+            transition: transform 0.15s ease;
+        }
+        .bottom-nav .bn-btn span {
+            font-size: 10px; font-weight: 600; letter-spacing: 0.2px;
+        }
+        .bottom-nav .bn-btn.active { color: var(--gold); }
+        .bottom-nav .bn-btn.active i { transform: scale(1.12); }
+
+        /* ═══ MOBILE LEADERBOARD ═══ */
+        .lb-mobile { display: none; }
+        @media (max-width: 767px) {
+            .lb-mobile { display: block; }
+            .lb-desktop { display: none; }
+            .lb-filters { flex-direction: column; gap: 8px; }
+        }
+        .lb-sort {
+            display: flex; gap: 6px; margin-bottom: 12px; padding: 4px;
+            background: rgba(255,255,255,0.03); border-radius: 8px;
+        }
+        .lb-sort-btn {
+            flex: 1; padding: 8px;
+            background: transparent;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--slate);
+            font-size: 12px; font-weight: 600;
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .lb-sort-btn.active {
+            color: var(--gold); border-color: var(--gold);
+            background: rgba(212, 175, 55, 0.1);
+        }
+        .lb-team-total {
+            background: rgba(15, 23, 42, 0.92);
+            border: 1px solid rgba(212, 175, 55, 0.35);
+            border-radius: 12px;
+            padding: 14px 16px;
+            margin-bottom: 12px;
+            position: sticky; top: 0; z-index: 10;
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+        }
+        .lb-team-total-title {
+            font-size: 11px; color: var(--gold);
+            font-weight: 700; letter-spacing: 1.5px;
+            margin-bottom: 8px;
+        }
+        .lb-team-total-main {
+            display: flex; justify-content: space-between;
+            font-size: 15px; font-weight: 700; color: var(--white);
+            margin-bottom: 6px;
+        }
+        .lb-team-total-main strong { color: var(--gold); }
+        .lb-team-total-sub {
+            font-size: 12px; color: var(--slate); margin-top: 4px;
+        }
+        .lb-team-total-sub strong { color: var(--white); font-weight: 700; }
+        .lb-mobile-row {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 12px 14px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .lb-mobile-row-header {
+            display: flex; align-items: center; gap: 10px;
+        }
+        .lb-rank {
+            font-size: 13px; font-weight: 800;
+            color: var(--gold); min-width: 28px;
+        }
+        .lb-name {
+            flex: 1; font-size: 14px; font-weight: 700; color: var(--white);
+            overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+        }
+        .lb-chevron {
+            font-size: 11px; color: var(--slate);
+            transition: transform 0.2s;
+        }
+        .lb-mobile-row.open .lb-chevron { transform: rotate(180deg); }
+        .lb-mobile-row-stats {
+            display: flex; justify-content: space-between;
+            margin-top: 8px; font-size: 13px; color: var(--white);
+        }
+        .lb-mobile-row-stats strong { color: var(--gold); }
+        .lb-mobile-row-detail {
+            display: none;
+            margin-top: 12px; padding-top: 12px;
+            border-top: 1px solid var(--border);
+            font-size: 12px; color: var(--slate); line-height: 1.7;
+        }
+        .lb-mobile-row-detail strong { color: var(--white); font-weight: 700; }
+        .lb-mobile-row.open .lb-mobile-row-detail { display: block; }
+        .lb-mobile-row-pecvs {
+            display: flex; justify-content: space-between;
+            font-family: 'Inter', monospace;
+            font-size: 13px; color: var(--white);
+            margin-bottom: 6px;
+        }
+        .lb-mobile-row-pecvs span strong { color: var(--gold); }
+        .lb-mobile-empty {
+            padding: 30px 20px; text-align: center;
+            color: var(--slate); font-size: 14px;
+        }
+
+        /* ═══ "DISPONIBLE EN COMPUTADORA" — pestañas heavy ocultas en mobile ═══ */
+        .desktop-only-msg { display: none; }
+        @media (max-width: 767px) {
+            .desktop-only-msg {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                text-align: center;
+                padding: 60px 24px;
+                color: var(--slate);
+                font-size: 14px;
+            }
+            .desktop-only-msg i {
+                font-size: 48px; color: var(--gold);
+                opacity: 0.6; margin-bottom: 16px;
+            }
+            .desktop-only-msg strong {
+                color: var(--white); font-size: 16px;
+                display: block; margin-bottom: 6px;
+            }
+            #tab-bitacora .card,
+            #tab-reporte .card,
+            #tab-mi-reporte .card { display: none; }
+        }
+
         /* CARDS */
         .card {
             background: var(--panel);
@@ -841,19 +1001,19 @@
             </div>
         </div>
 
-        <!-- TAB NAV -->
+        <!-- TAB NAV (desktop) -->
         <div class="tab-nav">
-            <button class="tab-btn" onclick="switchTab('bitacora',this)"><i class="fa fa-book-open"></i> Bitácora</button>
-            <button class="tab-btn active" onclick="switchTab('leaderboard',this)"><i class="fa fa-table"></i> Leaderboard /
+            <button class="tab-btn" data-tab="bitacora" onclick="switchTab('bitacora',this)"><i class="fa fa-book-open"></i> Bitácora</button>
+            <button class="tab-btn active" data-tab="leaderboard" onclick="switchTab('leaderboard',this)"><i class="fa fa-table"></i> Leaderboard /
                 Ratios</button>
-            <button class="tab-btn" onclick="switchTab('kpis',this)"><i class="fa fa-chart-column"></i>
+            <button class="tab-btn" data-tab="kpis" onclick="switchTab('kpis',this)"><i class="fa fa-chart-column"></i>
                 KPIs (Barras)</button>
-            <button class="tab-btn" onclick="switchTab('charts',this)"><i class="fa fa-chart-area"></i>
+            <button class="tab-btn" data-tab="charts" onclick="switchTab('charts',this)"><i class="fa fa-chart-area"></i>
                 Tendencias</button>
-            <button class="tab-btn" onclick="switchTab('reporte',this)"><i class="fa fa-file-lines"></i> Reportes de Coaches</button>
-            <button class="tab-btn" onclick="switchTab('mi-reporte',this)"><i class="fa fa-clipboard-list"></i> Mi Reporte</button>
-            <button class="tab-btn" onclick="switchTab('tienda',this);initPromotorTienda()"><i class="fa fa-store"></i> Tienda</button>
-            <button class="tab-btn" onclick="switchTab('conceptos',this)"><i class="fa fa-lightbulb"></i> Conceptos</button>
+            <button class="tab-btn" data-tab="reporte" onclick="switchTab('reporte',this)"><i class="fa fa-file-lines"></i> Reportes de Coaches</button>
+            <button class="tab-btn" data-tab="mi-reporte" onclick="switchTab('mi-reporte',this)"><i class="fa fa-clipboard-list"></i> Mi Reporte</button>
+            <button class="tab-btn" data-tab="tienda" onclick="switchTab('tienda',this);initPromotorTienda()"><i class="fa fa-store"></i> Tienda</button>
+            <button class="tab-btn" data-tab="conceptos" onclick="switchTab('conceptos',this)"><i class="fa fa-lightbulb"></i> Conceptos</button>
         </div>
 
         <!-- ═══════════════════════════════ TAB: LEADERBOARD ═══════════════════════════════ -->
@@ -896,7 +1056,18 @@
 
                 <!-- Info box removed per user request -->
 
-                <div class="table-scroll">
+                <!-- ═══ MOBILE LEADERBOARD (visible solo en mobile) ═══ -->
+                <div class="lb-mobile">
+                    <div class="lb-sort">
+                        <button class="lb-sort-btn active" data-sort="prima" onclick="setMobileLbSort('prima')">Prima ↓</button>
+                        <button class="lb-sort-btn" data-sort="S" onclick="setMobileLbSort('S')">S ↓</button>
+                        <button class="lb-sort-btn" data-sort="V" onclick="setMobileLbSort('V')">V ↓</button>
+                    </div>
+                    <div id="lb-mobile-team-total"></div>
+                    <div id="lb-mobile-rows"></div>
+                </div>
+
+                <div class="table-scroll lb-desktop">
                     <table class="lb-table">
                         <thead id="lb-thead">
                             <tr>
@@ -1052,6 +1223,11 @@
 
         <!-- ═══════════════════ TAB: REPORTES DE COACHES ═══════════════════ -->
         <div id="tab-reporte" class="tab-panel">
+            <div class="desktop-only-msg">
+                <i class="fa fa-desktop"></i>
+                <strong>Solo en computadora</strong>
+                Los reportes de coaches están optimizados para pantalla grande.<br>Abrí esta sección desde tu PC.
+            </div>
             <!-- Sub-tab switcher -->
             <div style="display:flex; gap:8px; margin-bottom:20px;">
                 <button id="rpt-sub-btn-ventas" onclick="switchReporteSub('ventas')" style="padding:8px 18px; border-radius:8px; border:none; background:var(--gold); color:#000; font-weight:700; font-size:13px; cursor:pointer;">📊 Reportes de Ventas</button>
@@ -1111,6 +1287,11 @@
 
         <!-- ═══════════════════ TAB: BITÁCORA ═══════════════════ -->
         <div id="tab-bitacora" class="tab-panel">
+            <div class="desktop-only-msg">
+                <i class="fa fa-desktop"></i>
+                <strong>Solo en computadora</strong>
+                La bitácora de agentes tiene muchas columnas y se ve mejor en pantalla grande.<br>Abrí esta sección desde tu PC.
+            </div>
             <div class="card">
                 <p class="card-title"><i class="fa fa-book-open"></i> Bitácora de Agentes <span style="font-size:12px;font-weight:400;color:var(--slate);">(solo lectura, para efectos de supervisión)</span></p>
                 <div class="info-box">
@@ -1188,6 +1369,11 @@
 
         <!-- ═══════════════════ TAB: MI REPORTE ═══════════════════ -->
         <div id="tab-mi-reporte" class="tab-panel">
+            <div class="desktop-only-msg">
+                <i class="fa fa-desktop"></i>
+                <strong>Solo en computadora</strong>
+                "Mi Reporte" es para llenarlo desde una pantalla grande.<br>Abrí esta sección desde tu PC.
+            </div>
 
             <!-- Selector de mes/año -->
             <div class="card" style="margin-bottom:20px;">
@@ -1384,6 +1570,30 @@
             </div>
         </div>
     </div>
+
+    <!-- BOTTOM NAV (mobile only, estilo iOS/Android) -->
+    <nav class="bottom-nav">
+        <button class="bn-btn active" data-tab="leaderboard" onclick="switchTab('leaderboard',this)">
+            <i class="fa fa-table"></i>
+            <span>Equipo</span>
+        </button>
+        <button class="bn-btn" data-tab="kpis" onclick="switchTab('kpis',this)">
+            <i class="fa fa-chart-column"></i>
+            <span>KPIs</span>
+        </button>
+        <button class="bn-btn" data-tab="charts" onclick="switchTab('charts',this)">
+            <i class="fa fa-chart-area"></i>
+            <span>Tend.</span>
+        </button>
+        <button class="bn-btn" data-tab="tienda" onclick="switchTab('tienda',this);initPromotorTienda()">
+            <i class="fa fa-store"></i>
+            <span>Tienda</span>
+        </button>
+        <button class="bn-btn" data-tab="conceptos" onclick="switchTab('conceptos',this)">
+            <i class="fa fa-lightbulb"></i>
+            <span>Concep.</span>
+        </button>
+    </nav>
 
     <!-- UPDATE AVAILABLE MODAL -->
     <div class="modal-overlay" id="update-available-modal">
@@ -2192,9 +2402,11 @@
         // ─── TABS ─────────────────────────────────────────────────────────────────────
         function switchTab(name, btn) {
             document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            // Limpiar active en AMBOS navs (top tabs desktop + bottom nav mobile)
+            document.querySelectorAll('.tab-btn, .bn-btn').forEach(b => b.classList.remove('active'));
             document.getElementById('tab-' + name).classList.add('active');
-            btn.classList.add('active');
+            // Activar el botón correspondiente en ambos navs (matched por data-tab)
+            document.querySelectorAll(`[data-tab="${name}"]`).forEach(b => b.classList.add('active'));
             if (name === 'charts') renderCharts();
             if (name === 'kpis') renderKPIs();
             if (name === 'leaderboard') renderLeaderboard();
@@ -2361,6 +2573,21 @@
             btn.classList.toggle('btn-red', showRedData);
         }
 
+        // ─── MOBILE LEADERBOARD STATE ───────────────────────────────────────────────
+        // El leaderboard mobile usa una vista alternativa con team-total sticky + cards
+        // expandibles. Suma TODO (válido + rojo) sin distinción para simplificar.
+        let mobileLbSort = 'prima';  // 'prima' | 'S' | 'V'
+        window.setMobileLbSort = function (key) {
+            mobileLbSort = key;
+            document.querySelectorAll('.lb-sort-btn').forEach(b => {
+                b.classList.toggle('active', b.dataset.sort === key);
+            });
+            renderLeaderboard();
+        };
+        window.toggleLbMobileRow = function (el) {
+            el.classList.toggle('open');
+        };
+
         function validateDay(d) {
             if (d.P === 0 && d.E === 0 && d.C === 0 && d.V === 0 && d.S === 0 && d.prima === 0) return { ok: true, errors: [] };
             const errors = [];
@@ -2435,10 +2662,18 @@
             );
 
             // aggregate per agent (re-summing only valid days + tracking red activity)
+            // ALSO build agMapMobile that sums ALL days (valid + invalid) sin distinción
+            // — usado por el mobile leaderboard para "simplificar".
             const agMap = {};
+            const agMapMobile = {};
             filtered.forEach(e => {
                 if (!agMap[e.agent]) agMap[e.agent] = { P: 0, E: 0, C: 0, V: 0, S: 0, prima: 0, redS: 0, redPrima: 0 };
+                if (!agMapMobile[e.agent]) agMapMobile[e.agent] = { P: 0, E: 0, C: 0, V: 0, S: 0, prima: 0 };
                 e.dias.forEach(d => {
+                    // Mobile aggregation: sumar todo sin filtrar
+                    COLS.forEach(c => agMapMobile[e.agent][c] += d[c]);
+                    agMapMobile[e.agent].prima += d.prima;
+                    // Desktop aggregation: filtrar por validateDay (valid vs red)
                     const { ok } = validateDay(d);
                     if (ok) {
                         COLS.forEach(c => agMap[e.agent][c] += d[c]);
@@ -2457,7 +2692,13 @@
 
             if (!agents.length) {
                 tbody.innerHTML = `<tr class="no-data-row"><td colspan="${showRedData ? 17 : 14}">No hay datos con los filtros actuales.</td></tr>`;
-                tfoot.innerHTML = ''; return;
+                tfoot.innerHTML = '';
+                // Mobile: empty state
+                const mTotalEl = document.getElementById('lb-mobile-team-total');
+                const mRowsEl = document.getElementById('lb-mobile-rows');
+                if (mTotalEl) mTotalEl.innerHTML = '';
+                if (mRowsEl) mRowsEl.innerHTML = '<div class="lb-mobile-empty">No hay datos con los filtros actuales.</div>';
+                return;
             }
 
             // Pre-calc team totals para usar en cada fila
@@ -2543,6 +2784,81 @@
                 <td style="border-left:1px solid var(--red);color:var(--gold);font-weight:800">$${totFinal}</td>
                 ` : ''}
             </tr>`;
+
+            // ─── MOBILE LEADERBOARD ───────────────────────────────────────────────
+            // Renderiza la vista mobile (team total sticky + cards expandibles).
+            // Usa agMapMobile que suma todo (válido + rojo) sin distinción.
+            renderMobileLeaderboard(agMapMobile);
+        }
+
+        function renderMobileLeaderboard(agMap) {
+            const totalEl = document.getElementById('lb-mobile-team-total');
+            const rowsEl = document.getElementById('lb-mobile-rows');
+            if (!totalEl || !rowsEl) return;
+
+            const agents = Object.keys(agMap);
+            if (!agents.length) {
+                totalEl.innerHTML = '';
+                rowsEl.innerHTML = '<div class="lb-mobile-empty">No hay datos con los filtros actuales.</div>';
+                return;
+            }
+
+            // Compute team totals (suma de todo)
+            const tot = { P: 0, E: 0, C: 0, V: 0, S: 0, prima: 0 };
+            agents.forEach(ag => {
+                ['P','E','C','V','S','prima'].forEach(c => tot[c] += agMap[ag][c]);
+            });
+            const numAgents = agents.length;
+            const totPrimaFmt = tot.prima.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            const efPV = tot.P > 0 ? ((tot.V / tot.P) * 100).toFixed(1) + '%' : '—';
+            const dolPerV = tot.V > 0 ? '$' + (tot.prima / tot.V).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '—';
+            const dolPerInt = numAgents > 0 ? '$' + (tot.prima / numAgents).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '—';
+
+            totalEl.innerHTML = `
+                <div class="lb-team-total">
+                    <div class="lb-team-total-title">EQUIPO TOTAL</div>
+                    <div class="lb-team-total-main">
+                        <div>S: <strong>${tot.S}</strong></div>
+                        <div>Prima: <strong>$${totPrimaFmt}</strong></div>
+                    </div>
+                    <div class="lb-team-total-sub">Eficiencia P → V: <strong>${efPV}</strong></div>
+                    <div class="lb-team-total-sub">$/V: <strong>${dolPerV}</strong>  ·  $/Integrante: <strong>${dolPerInt}</strong></div>
+                </div>
+            `;
+
+            // Sort agents by selected key (default: prima desc)
+            agents.sort((a, b) => agMap[b][mobileLbSort] - agMap[a][mobileLbSort]);
+
+            rowsEl.innerHTML = agents.map((ag, i) => {
+                const d = agMap[ag];
+                const primaFmt = d.prima.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                const ef = d.P > 0 ? ((d.V / d.P) * 100).toFixed(1) + '%' : '—';
+                const dpv = d.V > 0 ? '$' + (d.prima / d.V).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '—';
+                return `
+                    <div class="lb-mobile-row" onclick="toggleLbMobileRow(this)">
+                        <div class="lb-mobile-row-header">
+                            <div class="lb-rank">#${i + 1}</div>
+                            <div class="lb-name">${escapeHtml(ag)}</div>
+                            <div class="lb-chevron"><i class="fa fa-chevron-down"></i></div>
+                        </div>
+                        <div class="lb-mobile-row-stats">
+                            <div>S: <strong>${d.S}</strong></div>
+                            <div>Prima: <strong>$${primaFmt}</strong></div>
+                        </div>
+                        <div class="lb-mobile-row-detail">
+                            <div class="lb-mobile-row-pecvs">
+                                <span>P:<strong>${d.P}</strong></span>
+                                <span>E:<strong>${d.E}</strong></span>
+                                <span>C:<strong>${d.C}</strong></span>
+                                <span>V:<strong>${d.V}</strong></span>
+                                <span>S:<strong>${d.S}</strong></span>
+                            </div>
+                            <div>Eficiencia P → V: <strong>${ef}</strong></div>
+                            <div>$/V: <strong>${dpv}</strong></div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
         }
 
         // ─── CHARTS ──────────────────────────────────────────────────────────────────
