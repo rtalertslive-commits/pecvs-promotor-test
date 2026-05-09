@@ -107,29 +107,121 @@
             gap: 24px;
         }
 
-        /* HEADER */
+        /* HEADER — column en mobile, row en desktop (mismo patrón que agente) */
         .header {
             display: flex;
-            justify-content: space-between;
-            align-items: center;
+            flex-direction: column;
+            gap: 15px;
             padding-bottom: 20px;
             border-bottom: 1px solid var(--border);
         }
+        @media (min-width: 768px) {
+            .header {
+                flex-direction: row;
+                justify-content: space-between;
+                align-items: center;
+            }
+        }
 
-        .header-left h1 {
+        /* BRAND: monograma dorado + wordmark "Actividad" + subtitle pulse */
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+        .brand-mono {
+            width: 48px;
+            height: 48px;
+            border-radius: 11px;
+            background: linear-gradient(135deg, var(--gold-l) 0%, var(--gold) 50%, #a08015 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
             font-family: 'Playfair Display', serif;
-            font-size: 30px;
+            font-weight: 900;
+            font-size: 26px;
+            color: var(--bg);
+            box-shadow: 0 4px 14px rgba(212, 175, 55, 0.3), inset 0 1px 0 rgba(255,255,255,0.2);
+            flex-shrink: 0;
+            line-height: 1;
+        }
+        .header-left h1 {
+            font-family: 'Inter', sans-serif;
+            font-weight: 800;
+            font-size: 19px;
             margin: 0;
-            background: linear-gradient(90deg, var(--white), var(--gold));
-            -webkit-background-clip: text;
-            background-clip: text;
-            -webkit-text-fill-color: transparent;
+            color: var(--white);
+            letter-spacing: -0.3px;
+            line-height: 1.1;
+            background: none;
+            -webkit-text-fill-color: var(--white);
+        }
+        .brand-sub {
+            font-size: 9px;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            margin-top: 3px;
+            font-weight: 600;
+            color: var(--slate);
+        }
+        .brand-sub .ver {
+            color: var(--slate);
+            margin-left: 6px;
+            letter-spacing: 1px;
+            font-weight: 500;
+        }
+        @keyframes brandSubPulse {
+            0%, 100% {
+                color: var(--gold);
+                text-shadow: 0 0 0 transparent;
+            }
+            50% {
+                color: var(--gold-l);
+                text-shadow: 0 0 10px rgba(212, 175, 55, 0.7), 0 0 20px rgba(212, 175, 55, 0.35);
+            }
+        }
+        .pulse-text {
+            animation: brandSubPulse 3s ease-in-out infinite;
+            color: var(--gold);
         }
 
         .header-left p {
             margin: 4px 0 0;
-            font-size: 12px;
+            font-size: 14px;
             color: var(--slate);
+        }
+
+        /* KARMA BADGE — con glow pulsante (igual al agente) */
+        @keyframes karmaPulse {
+            0%,100% { box-shadow: 0 0 8px rgba(212,175,55,0.3); }
+            50%      { box-shadow: 0 0 20px rgba(212,175,55,0.8), 0 0 40px rgba(212,175,55,0.3); }
+        }
+        #karma-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: linear-gradient(135deg, rgba(212,175,55,0.18), rgba(212,175,55,0.06));
+            border: 1.5px solid rgba(212,175,55,0.5);
+            border-radius: 24px;
+            padding: 5px 16px 5px 10px;
+            margin-top: 6px;
+            cursor: default;
+            animation: karmaPulse 3s ease-in-out infinite;
+        }
+        #karma-badge .star { font-size: 20px; }
+        #karma-badge .karma-num {
+            color: var(--gold);
+            font-weight: 800;
+            font-size: 22px;
+            letter-spacing: 1px;
+            line-height: 1;
+        }
+        #karma-badge .karma-lbl {
+            color: var(--slate);
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
         }
 
         .header-right {
@@ -1156,15 +1248,19 @@
         <!-- HEADER -->
         <div class="header">
             <div class="header-left">
-                <h1><i class="fa-solid fa-chart-line" style="font-size:22px;margin-right:10px;"></i>PECVS$ Analytics
-                    <small style="font-size:10px; color:var(--slate);" data-app-version>—</small>
-                </h1>
+                <div class="brand">
+                    <div class="brand-mono">P</div>
+                    <div>
+                        <h1>Actividad</h1>
+                        <div class="brand-sub"><span class="pulse-text">REGISTRO PROFESIONAL</span> <span class="ver" data-app-version>—</span></div>
+                    </div>
+                </div>
                 <p id="coach-display">Promotor: —</p>
-                <p id="team-display" style="font-size:10px; color:var(--gold); font-weight:700;">Equipo: Sin Código</p>
-                <div id="karma-badge" style="display:inline-flex;align-items:center;gap:6px;background:linear-gradient(135deg,rgba(212,175,55,0.18),rgba(212,175,55,0.06));border:1.5px solid rgba(212,175,55,0.5);border-radius:24px;padding:4px 14px 4px 10px;margin-top:4px;cursor:default;">
-                    <span style="font-size:18px;"><svg class="totopo-icon"><use href="#totopo"/></svg></span>
-                    <span id="karma-value" style="color:var(--gold);font-weight:800;font-size:20px;letter-spacing:1px;line-height:1;">0</span>
-                    <span style="color:var(--slate);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:2px;">totopos</span>
+                <p id="team-display" style="font-size:11px; color:var(--gold); font-weight:700; margin-top:2px;">Equipo: Sin Código</p>
+                <div id="karma-badge">
+                    <span class="star"><svg class="totopo-icon"><use href="#totopo"/></svg></span>
+                    <span class="karma-num" id="karma-value">0</span>
+                    <span class="karma-lbl">totopos</span>
                 </div>
             </div>
             <div class="header-right">
