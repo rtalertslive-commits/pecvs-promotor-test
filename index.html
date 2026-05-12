@@ -357,6 +357,25 @@
         }
         .bottom-nav .bn-btn.active { color: var(--gold); }
         .bottom-nav .bn-btn.active i { transform: scale(1.12); }
+        /* Badge contador en pestaña Equipo (pendientes de actividad) */
+        .bottom-nav .bn-btn { position: relative; }
+        .bn-badge {
+            position: absolute;
+            top: 4px;
+            right: 18%;
+            background: #f59e0b;
+            color: #0f172a;
+            font-size: 10px;
+            font-weight: 800;
+            min-width: 16px;
+            height: 16px;
+            border-radius: 999px;
+            padding: 0 5px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+        }
 
         /* ═══ MOBILE LEADERBOARD ═══ */
         .lb-mobile { display: none; }
@@ -488,6 +507,92 @@
         .lb-mobile-empty {
             padding: 30px 20px; text-align: center;
             color: var(--slate); font-size: 14px;
+        }
+
+        /* ═══ PENDIENTES (cards fantasma sin actividad reciente) ═══ */
+        .lb-pendientes-section {
+            margin-top: 20px;
+            padding-top: 16px;
+            border-top: 1px dashed rgba(255,255,255,0.1);
+        }
+        .lb-pendientes-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 12px; gap: 10px; flex-wrap: wrap;
+        }
+        .lb-pendientes-title {
+            font-size: 12px; font-weight: 700; color: var(--slate);
+            text-transform: uppercase; letter-spacing: 1px;
+            display: flex; align-items: center; gap: 6px;
+        }
+        .lb-pendientes-title .count {
+            background: rgba(245,158,11,0.15);
+            color: #f59e0b;
+            padding: 2px 8px; border-radius: 999px;
+            font-weight: 800; font-size: 11px;
+        }
+        .lb-pendientes-filter {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: var(--white); font-size: 11px;
+            padding: 4px 8px; border-radius: 6px;
+            cursor: pointer;
+        }
+        .lb-ghost-card {
+            background: rgba(255,255,255,0.02);
+            border: 1px dashed rgba(255,255,255,0.15);
+            border-radius: 10px;
+            padding: 11px 14px;
+            margin-bottom: 8px;
+            display: flex; align-items: center; gap: 12px;
+            opacity: 0.85;
+        }
+        .lb-ghost-card.tier-5 { border-color: rgba(239,68,68,0.4); background: rgba(239,68,68,0.04); }
+        .lb-ghost-card.tier-4 { border-color: rgba(248,113,113,0.35); background: rgba(248,113,113,0.04); }
+        .lb-ghost-card.tier-3 { border-color: rgba(251,146,60,0.3); background: rgba(251,146,60,0.04); }
+        .lb-ghost-card.tier-2 { border-color: rgba(251,191,36,0.25); background: rgba(251,191,36,0.04); }
+        .lb-ghost-card.tier-0 { border-color: rgba(245,158,11,0.3); background: rgba(245,158,11,0.04); }
+        .lb-ghost-icon {
+            font-size: 22px; flex-shrink: 0;
+            width: 32px; text-align: center;
+        }
+        .lb-ghost-body { flex: 1; min-width: 0; }
+        .lb-ghost-name {
+            font-size: 13px; font-weight: 700;
+            color: var(--white);
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .lb-ghost-tier-label {
+            font-size: 11px;
+            margin-top: 2px;
+            font-weight: 600;
+        }
+        .lb-ghost-second-line {
+            font-size: 10px; color: var(--slate);
+            margin-top: 2px;
+        }
+        .lb-ghost-coach {
+            font-size: 10px; color: var(--slate);
+            margin-top: 2px;
+            opacity: 0.7;
+        }
+        /* Summary mode (colapsado para director/supra con muchos pendientes) */
+        .lb-pendientes-summary {
+            background: rgba(255,255,255,0.02);
+            border: 1px dashed rgba(255,255,255,0.12);
+            border-radius: 10px;
+            padding: 12px 14px;
+            cursor: pointer;
+            transition: background .15s;
+        }
+        .lb-pendientes-summary:hover { background: rgba(255,255,255,0.04); }
+        .lb-pendientes-summary-counts {
+            display: flex; flex-wrap: wrap; gap: 8px;
+            margin-top: 6px;
+            font-size: 11px; color: var(--slate);
+        }
+        .lb-pendientes-summary-counts .count-pill {
+            background: rgba(255,255,255,0.05);
+            padding: 2px 8px; border-radius: 999px;
         }
 
         /* ═══ "DISPONIBLE EN COMPUTADORA" — pestañas heavy ocultas en mobile ═══ */
@@ -1339,6 +1444,9 @@
                     </div>
                     <div id="lb-mobile-team-total"></div>
                     <div id="lb-mobile-rows"></div>
+
+                    <!-- PENDIENTES (sin actividad reciente) - solo aparece si hay alguno -->
+                    <div id="lb-mobile-pendientes" style="display:none;"></div>
                 </div>
 
                 <div class="table-scroll lb-desktop">
@@ -1850,6 +1958,7 @@
         <button class="bn-btn active" data-tab="leaderboard" onclick="switchTab('leaderboard',this)">
             <i class="fa fa-table"></i>
             <span>Equipo</span>
+            <span id="equipo-pendientes-badge" class="bn-badge" style="display:none;">0</span>
         </button>
         <button class="bn-btn" data-tab="kpis" onclick="switchTab('kpis',this)">
             <i class="fa fa-chart-column"></i>
@@ -2514,7 +2623,8 @@
             const aggregated = {
                 entries: [],
                 agents: [],
-                agentCoachMap: {}
+                agentCoachMap: {},
+                agentDetails: {}   // { [agentName]: { email, approvedAt, coachEmail } } — for pendientes feature
             };
 
             state.coaches.forEach(coach => {
@@ -2530,16 +2640,25 @@
                     Object.keys(aggregated.agentCoachMap).forEach(ag => {
                         if (aggregated.agentCoachMap[ag] === coach.email) {
                             delete aggregated.agentCoachMap[ag];
+                            delete aggregated.agentDetails[ag];
                         }
                     });
 
                     snapshot.forEach((docSnap) => {
                         const agentData = docSnap.data();
+                        // Skip inactivos: no aparecen en leaderboard ni en pendientes
+                        if (agentData.status === 'inactive') return;
                         if (agentData.agentName) {
                             if (!aggregated.agents.includes(agentData.agentName)) {
                                 aggregated.agents.push(agentData.agentName);
                             }
                             aggregated.agentCoachMap[agentData.agentName] = coach.email;
+                            // Detalles para feature de pendientes (approvedAt, coach asignado)
+                            aggregated.agentDetails[agentData.agentName] = {
+                                email: docSnap.id,
+                                approvedAt: agentData.approvedAt || null,
+                                coachEmail: coach.email
+                            };
                             if (agentData.entries) {
                                 agentData.entries.forEach(e => {
                                     e.agent = agentData.agentName;
@@ -2554,11 +2673,107 @@
                     state.entries = aggregated.entries;
                     state.agents = aggregated.agents;
                     state.agentCoachMap = aggregated.agentCoachMap;
+                    state.agentDetails = aggregated.agentDetails;
                     refreshAll();
                 });
                 agentUnsubs.push(unsub);
             });
         }
+
+        // ─── PENDIENTES (sin actividad reciente) ──────────────────────────────────────
+        // Calcula la última fecha con actividad real (P+E+C+V+S>0 o prima>0) de cada agente,
+        // clasifica en 5 tiers escalonados y devuelve la lista de los que están "fantasmas".
+        // Sin costo de Firestore: usa state.entries y state.agents que ya están en memoria.
+        let pendientesMinDays = 3; // filtro: mostrar pendientes con >= X días (3/7/15/30)
+
+        function computeLastActivityMap() {
+            const map = {};
+            state.entries.forEach(e => {
+                const [mesName, yearStr] = e.mes.split(' ');
+                const monthIdx = MONTHS_ES.indexOf(mesName);
+                const year = parseInt(yearStr);
+                const semana = parseInt(e.semana);
+                if (!e.dias) return;
+                e.dias.forEach(d => {
+                    const hasActivity = (d.P + d.E + d.C + d.V + d.S) > 0 || d.prima > 0;
+                    if (!hasActivity) return;
+                    const dayIdx = DAYS.indexOf(d.dia); // 0 = Lunes
+                    const dayOfMonth = (semana - 1) * 7 + dayIdx + 1;
+                    const date = new Date(year, monthIdx, Math.min(dayOfMonth, 28));
+                    if (!map[e.agent] || date > map[e.agent]) map[e.agent] = date;
+                });
+            });
+            return map;
+        }
+
+        function formatDaysSince(dateA, dateB) {
+            const ms = dateB - dateA;
+            const days = Math.floor(ms / (1000 * 60 * 60 * 24));
+            if (days < 1) return 'menos de 1 día';
+            if (days === 1) return '1 día';
+            if (days < 7) return `${days} días`;
+            if (days < 14) return '1 semana';
+            if (days < 30) return `${Math.floor(days / 7)} semanas`;
+            if (days < 60) return '1 mes';
+            return `${Math.floor(days / 30)} meses`;
+        }
+
+        function clasificarPendiente(agentName, lastActivityMap, hoy) {
+            const lastDate = lastActivityMap[agentName] || null;
+            const details = state.agentDetails ? state.agentDetails[agentName] : null;
+            // Tier 1: nunca reportó
+            if (!lastDate) {
+                const approvedAt = details?.approvedAt ? new Date(details.approvedAt) : null;
+                // Grace period: 24h desde aprobación. Si recién lo aprobaste, no flashea.
+                if (approvedAt) {
+                    const hoursSinceApproval = (hoy - approvedAt) / (1000 * 60 * 60);
+                    if (hoursSinceApproval < 24) return null;
+                }
+                return {
+                    tier: 0,
+                    label: 'Sin actividad desde que se registró',
+                    icon: '🆕',
+                    color: '#f59e0b',
+                    secondLine: approvedAt ? `Registrado hace ${formatDaysSince(approvedAt, hoy)}` : null
+                };
+            }
+            // Tiers 2-5: días desde última actividad
+            const dias = Math.floor((hoy - lastDate) / (1000 * 60 * 60 * 24));
+            if (dias >= 30) return { tier: 5, label: 'Sin actividad desde hace más de 1 mes', icon: '🚨', color: '#ef4444' };
+            if (dias >= 15) return { tier: 4, label: 'Sin actividad desde hace 1 quincena',   icon: '🕐', color: '#f87171' };
+            if (dias >= 7)  return { tier: 3, label: 'Sin actividad desde hace 1 semana',     icon: '⏰', color: '#fb923c' };
+            if (dias >= 3)  return { tier: 2, label: 'Sin actividad desde hace 3 días',       icon: '⏳', color: '#fbbf24' };
+            return null; // activo
+        }
+
+        function getPendientes(hoy = new Date()) {
+            if (!state.agents || !state.agents.length) return [];
+            const lastActivityMap = computeLastActivityMap();
+            const list = [];
+            state.agents.forEach(name => {
+                const cls = clasificarPendiente(name, lastActivityMap, hoy);
+                if (!cls) return;
+                // Aplicar filtro pendientesMinDays:
+                //   3 = mostrar todos (tiers 0,2,3,4,5)
+                //   7 = solo tier 0 + tier 3+ (>=7 días o nunca)
+                //   15 = solo tier 0 + tier 4+ (>=15 días o nunca)
+                //   30 = solo tier 0 + tier 5 (>=30 días o nunca)
+                if (pendientesMinDays === 7 && cls.tier !== 0 && cls.tier < 3) return;
+                if (pendientesMinDays === 15 && cls.tier !== 0 && cls.tier < 4) return;
+                if (pendientesMinDays === 30 && cls.tier !== 0 && cls.tier < 5) return;
+                const coachEmail = state.agentDetails?.[name]?.coachEmail || state.agentCoachMap?.[name] || null;
+                const coachName = coachEmail && state.coachesMap?.[coachEmail]?.coachName || null;
+                list.push({ name, coachName, ...cls });
+            });
+            // Orden: más severo primero, luego alfabético
+            list.sort((a, b) => (b.tier - a.tier) || a.name.localeCompare(b.name));
+            return list;
+        }
+
+        window.setPendientesFilter = function (days) {
+            pendientesMinDays = parseInt(days) || 3;
+            renderLeaderboard();
+        };
 
         // ─── INIT ─────────────────────────────────────────────────────────────────────
         window.init = async function () {
@@ -3156,6 +3371,8 @@
             if (!agents.length) {
                 totalEl.innerHTML = '';
                 rowsEl.innerHTML = '<div class="lb-mobile-empty">No hay datos con los filtros actuales.</div>';
+                // Aún así render pendientes (pueden haber agentes sin entries)
+                renderPendientesSection();
                 return;
             }
 
@@ -3227,6 +3444,79 @@
                     </div>
                 `;
             }).join('');
+
+            // ─── Renderizar sección de PENDIENTES ────────────────────────────────────
+            renderPendientesSection();
+        }
+
+        // Renderiza la sección de cards fantasma (sin actividad reciente) abajo del leaderboard.
+        // Se calcula a partir de state.agents + state.entries + state.agentDetails. Cero queries.
+        function renderPendientesSection() {
+            const section = document.getElementById('lb-mobile-pendientes');
+            if (!section) return;
+            const pendientes = getPendientes();
+
+            // Actualizar badge en bottom nav
+            const badge = document.getElementById('equipo-pendientes-badge');
+            if (badge) {
+                if (pendientes.length > 0) {
+                    badge.style.display = 'inline-flex';
+                    badge.textContent = pendientes.length > 99 ? '99+' : String(pendientes.length);
+                } else {
+                    badge.style.display = 'none';
+                }
+            }
+
+            if (pendientes.length === 0) {
+                section.style.display = 'none';
+                return;
+            }
+            section.style.display = 'block';
+
+            // Filtro: opciones del dropdown
+            const filterOpts = [
+                { val: 3,  label: 'Hace 3 días' },
+                { val: 7,  label: 'Hace 1 semana' },
+                { val: 15, label: 'Hace 1 quincena' },
+                { val: 30, label: 'Hace 1 mes' }
+            ].map(o => `<option value="${o.val}" ${pendientesMinDays === o.val ? 'selected' : ''}>${o.label}</option>`).join('');
+
+            const cardsHtml = pendientes.map(p => {
+                const tierClass = `tier-${p.tier}`;
+                const secondLine = p.secondLine
+                    ? `<div class="lb-ghost-second-line">${escapeHtml(p.secondLine)}</div>`
+                    : '';
+                const coachLine = p.coachName
+                    ? `<div class="lb-ghost-coach">Coach: ${escapeHtml(p.coachName)}</div>`
+                    : '';
+                return `
+                    <div class="lb-ghost-card ${tierClass}">
+                        <div class="lb-ghost-icon">${p.icon}</div>
+                        <div class="lb-ghost-body">
+                            <div class="lb-ghost-name">${escapeHtml(p.name)}</div>
+                            <div class="lb-ghost-tier-label" style="color:${p.color};">${escapeHtml(p.label)}</div>
+                            ${secondLine}
+                            ${coachLine}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            section.innerHTML = `
+                <div class="lb-pendientes-section">
+                    <div class="lb-pendientes-header">
+                        <div class="lb-pendientes-title">
+                            <i class="fa fa-ghost"></i> Pendientes
+                            <span class="count">${pendientes.length}</span>
+                        </div>
+                        <select class="lb-pendientes-filter" onchange="setPendientesFilter(this.value)">
+                            <option disabled>Mostrar desde:</option>
+                            ${filterOpts}
+                        </select>
+                    </div>
+                    ${cardsHtml}
+                </div>
+            `;
         }
 
         // ─── CHARTS ──────────────────────────────────────────────────────────────────
