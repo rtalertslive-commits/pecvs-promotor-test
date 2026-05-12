@@ -2843,8 +2843,16 @@
                 const coachName = coachEmail && state.coachesMap?.[coachEmail]?.coachName || null;
                 list.push({ name, coachEmail, coachName, ...cls });
             });
-            // Orden: más severo primero, luego alfabético
-            list.sort((a, b) => (b.tier - a.tier) || a.name.localeCompare(b.name));
+            // Orden: 3 días → 1 semana → 1 quincena → 1 mes+ (ascendente por tier,
+            // los más recientes/recuperables primero), y "nunca reportó" (tier 0)
+            // al final como categoría separada.
+            list.sort((a, b) => {
+                // Tier 0 (nunca reportó) siempre va al final
+                if (a.tier === 0 && b.tier !== 0) return 1;
+                if (b.tier === 0 && a.tier !== 0) return -1;
+                // Resto: ascendente por tier, después alfabético
+                return (a.tier - b.tier) || a.name.localeCompare(b.name);
+            });
             return list;
         }
 
