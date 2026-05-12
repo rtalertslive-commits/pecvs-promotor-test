@@ -509,11 +509,72 @@
             color: var(--slate); font-size: 14px;
         }
 
+        /* ═══ SUB-TABS dentro de pestaña Equipo (Equipo / Pendientes) — MOBILE ONLY ═══ */
+        .lb-subtabs { display: none; } /* hidden by default on desktop */
+        @media (max-width: 767px) {
+            .lb-subtabs {
+                display: flex;
+                gap: 4px;
+                margin-bottom: 14px;
+                background: rgba(255,255,255,0.03);
+                padding: 4px;
+                border-radius: 10px;
+                border: 1px solid rgba(255,255,255,0.06);
+            }
+            /* Mobile: cuando body.lb-subview-pendientes está activa, ocultamos
+               las filas del equipo (filtros, sort, cards activas) y mostramos
+               solo la subview de pendientes. */
+            body.lb-subview-pendientes #tab-leaderboard .lb-filters,
+            body.lb-subview-pendientes #tab-leaderboard .lb-mobile,
+            body.lb-subview-pendientes #tab-leaderboard .lb-desktop { display: none !important; }
+            body.lb-subview-pendientes #lb-mobile-pendientes-subview { display: block !important; }
+        }
+        .lb-subtab-btn {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--slate);
+            font-size: 12px;
+            font-weight: 700;
+            padding: 9px 8px;
+            border-radius: 7px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            position: relative;
+            transition: background .15s, color .15s;
+            font-family: inherit;
+        }
+        .lb-subtab-btn:hover:not(.active) {
+            background: rgba(255,255,255,0.04);
+            color: var(--white);
+        }
+        .lb-subtab-btn.active {
+            background: rgba(212,175,55,0.15);
+            color: var(--gold);
+        }
+        .lb-subtab-badge {
+            background: #f59e0b;
+            color: #0f172a;
+            font-size: 10px;
+            font-weight: 800;
+            min-width: 18px;
+            height: 18px;
+            border-radius: 999px;
+            padding: 0 6px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+        }
+
         /* ═══ PENDIENTES (cards fantasma sin actividad reciente) ═══ */
         .lb-pendientes-section {
-            margin-top: 20px;
-            padding-top: 16px;
-            border-top: 1px dashed rgba(255,255,255,0.1);
+            margin-top: 0;
+            padding-top: 0;
+            border-top: none;
         }
         .lb-pendientes-header {
             display: flex; justify-content: space-between; align-items: center;
@@ -1410,6 +1471,17 @@
         <!-- ═══════════════════════════════ TAB: LEADERBOARD ═══════════════════════════════ -->
         <div id="tab-leaderboard" class="tab-panel active">
             <div class="card">
+                <!-- Sub-tabs (mobile only): Equipo / Pendientes con badge -->
+                <div class="lb-subtabs" role="tablist">
+                    <button class="lb-subtab-btn active" data-subview="equipo" onclick="switchLbSubview('equipo')" role="tab">
+                        <i class="fa fa-table"></i> Equipo
+                    </button>
+                    <button class="lb-subtab-btn" data-subview="pendientes" onclick="switchLbSubview('pendientes')" role="tab">
+                        <i class="fa fa-ghost"></i> Pendientes
+                        <span id="lb-subtab-pendientes-badge" class="lb-subtab-badge" style="display:none;">0</span>
+                    </button>
+                </div>
+
                 <div class="lb-filters">
                     <div>
                         <label class="field-label">Equipo Coach</label>
@@ -1453,9 +1525,11 @@
                     </div>
                     <div id="lb-mobile-team-total"></div>
                     <div id="lb-mobile-rows"></div>
+                </div>
 
-                    <!-- PENDIENTES (sin actividad reciente) - solo aparece si hay alguno -->
-                    <div id="lb-mobile-pendientes" style="display:none;"></div>
+                <!-- Subview PENDIENTES (mobile only, controlado por sub-tabs de arriba) -->
+                <div id="lb-mobile-pendientes-subview" style="display:none;">
+                    <div id="lb-mobile-pendientes"></div>
                 </div>
 
                 <div class="table-scroll lb-desktop">
@@ -2800,6 +2874,20 @@
             renderLeaderboard();
         };
 
+        // Sub-tabs dentro de la pestaña Equipo (mobile only): 'equipo' o 'pendientes'.
+        // En desktop los sub-tabs no se muestran y todo aparece junto (filtros + tabla
+        // arriba, sub-tabs ocultos por CSS). En mobile alternamos via body class.
+        let lbActiveSubview = 'equipo';
+        window.switchLbSubview = function (name) {
+            lbActiveSubview = (name === 'pendientes') ? 'pendientes' : 'equipo';
+            // Update tab buttons
+            document.querySelectorAll('.lb-subtab-btn').forEach(b => {
+                b.classList.toggle('active', b.dataset.subview === lbActiveSubview);
+            });
+            // Toggle body class — el CSS @media controla la visibilidad real en mobile
+            document.body.classList.toggle('lb-subview-pendientes', lbActiveSubview === 'pendientes');
+        };
+
         // ─── INIT ─────────────────────────────────────────────────────────────────────
         window.init = async function () {
             serverNow = await getServerTime();
@@ -3474,32 +3562,44 @@
             renderPendientesSection();
         }
 
-        // Renderiza la sección de cards fantasma (sin actividad reciente) abajo del leaderboard.
+        // Renderiza la sección de cards fantasma (sub-tab Pendientes dentro de Equipo).
         // Cero queries: usa state.agents + state.entries + state.agentDetails.
-        // El badge en bottom nav refleja el TOTAL (no el filtrado) para señal global.
+        // El badge va en el sub-tab "Pendientes" y refleja el TOTAL (sin filtros)
+        // para que sea una señal estable independientemente del coach seleccionado.
         function renderPendientesSection() {
             const section = document.getElementById('lb-mobile-pendientes');
             if (!section) return;
             const allPendientes = getPendientes();
             const filtered = applyPendientesFilters(allPendientes);
 
-            // Badge: TOTAL sin filtros (señal global)
-            const badge = document.getElementById('equipo-pendientes-badge');
-            if (badge) {
+            // Badge en el sub-tab "Pendientes" + en el bottom nav: TOTAL sin filtros.
+            // El del bottom nav sigue siendo señal global cuando el usuario está
+            // navegando KPIs/Tendencias/etc. y no ve la sub-tab.
+            const countLabel = allPendientes.length > 99 ? '99+' : String(allPendientes.length);
+            ['lb-subtab-pendientes-badge', 'equipo-pendientes-badge'].forEach(id => {
+                const el = document.getElementById(id);
+                if (!el) return;
                 if (allPendientes.length > 0) {
-                    badge.style.display = 'inline-flex';
-                    badge.textContent = allPendientes.length > 99 ? '99+' : String(allPendientes.length);
+                    el.style.display = 'inline-flex';
+                    el.textContent = countLabel;
                 } else {
-                    badge.style.display = 'none';
+                    el.style.display = 'none';
                 }
-            }
+            });
 
-            // Si no hay pendientes en absoluto, oculta la sección completa
+            // Si no hay pendientes en absoluto, muestra empty state amigable en lugar
+            // de ocultar la subview (el usuario podría seguir queriendo verla).
             if (allPendientes.length === 0) {
-                section.style.display = 'none';
+                section.innerHTML = `
+                    <div class="lb-pendientes-section">
+                        <div class="lb-mobile-empty" style="padding:40px 16px;">
+                            <i class="fa fa-check-circle" style="font-size:32px;color:var(--green);margin-bottom:12px;display:block;opacity:0.6;"></i>
+                            Sin pendientes — todos los agentes están reportando al día.
+                        </div>
+                    </div>
+                `;
                 return;
             }
-            section.style.display = 'block';
 
             // Opciones del filtro de tiempo
             const filterOpts = [
