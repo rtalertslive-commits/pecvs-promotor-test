@@ -519,6 +519,15 @@
             display: flex; justify-content: space-between; align-items: center;
             margin-bottom: 12px; gap: 10px; flex-wrap: wrap;
         }
+        .lb-pendientes-filters {
+            display: flex; gap: 6px; flex-wrap: wrap;
+            flex: 1; min-width: 0;
+            justify-content: flex-end;
+        }
+        .lb-pendientes-filters .lb-pendientes-filter {
+            flex: 0 1 auto; min-width: 0;
+            max-width: 180px;
+        }
         .lb-pendientes-title {
             font-size: 12px; font-weight: 700; color: var(--slate);
             text-transform: uppercase; letter-spacing: 1px;
@@ -2684,7 +2693,8 @@
         // Calcula la última fecha con actividad real (P+E+C+V+S>0 o prima>0) de cada agente,
         // clasifica en 5 tiers escalonados y devuelve la lista de los que están "fantasmas".
         // Sin costo de Firestore: usa state.entries y state.agents que ya están en memoria.
-        let pendientesMinDays = 3; // filtro: mostrar pendientes con >= X días (3/7/15/30)
+        let pendientesMinDays = 3;      // filtro tiempo: mostrar pendientes con >= X días (3/7/15/30)
+        let pendientesCoachFilter = ''; // filtro coach: '' = todos, else email del coach
 
         function computeLastActivityMap() {
             const map = {};
@@ -2746,6 +2756,8 @@
             return null; // activo
         }
 
+        // Devuelve TODOS los pendientes (sin aplicar filtros). El filtrado se hace
+        // en el render para que el badge global pueda reflejar el total real.
         function getPendientes(hoy = new Date()) {
             if (!state.agents || !state.agents.length) return [];
             const lastActivityMap = computeLastActivityMap();
@@ -2753,25 +2765,38 @@
             state.agents.forEach(name => {
                 const cls = clasificarPendiente(name, lastActivityMap, hoy);
                 if (!cls) return;
-                // Aplicar filtro pendientesMinDays:
-                //   3 = mostrar todos (tiers 0,2,3,4,5)
-                //   7 = solo tier 0 + tier 3+ (>=7 días o nunca)
-                //   15 = solo tier 0 + tier 4+ (>=15 días o nunca)
-                //   30 = solo tier 0 + tier 5 (>=30 días o nunca)
-                if (pendientesMinDays === 7 && cls.tier !== 0 && cls.tier < 3) return;
-                if (pendientesMinDays === 15 && cls.tier !== 0 && cls.tier < 4) return;
-                if (pendientesMinDays === 30 && cls.tier !== 0 && cls.tier < 5) return;
                 const coachEmail = state.agentDetails?.[name]?.coachEmail || state.agentCoachMap?.[name] || null;
                 const coachName = coachEmail && state.coachesMap?.[coachEmail]?.coachName || null;
-                list.push({ name, coachName, ...cls });
+                list.push({ name, coachEmail, coachName, ...cls });
             });
             // Orden: más severo primero, luego alfabético
             list.sort((a, b) => (b.tier - a.tier) || a.name.localeCompare(b.name));
             return list;
         }
 
+        // Aplica los filtros activos (tiempo + coach) a la lista total.
+        // pendientesMinDays:
+        //   3 = mostrar todos los tiers (0,2,3,4,5)
+        //   7 = solo tier 0 + tier 3+ (>=7 días o nunca)
+        //   15 = solo tier 0 + tier 4+ (>=15 días o nunca)
+        //   30 = solo tier 0 + tier 5 (>=30 días o nunca)
+        function applyPendientesFilters(list) {
+            return list.filter(p => {
+                if (pendientesCoachFilter && p.coachEmail !== pendientesCoachFilter) return false;
+                if (pendientesMinDays === 7  && p.tier !== 0 && p.tier < 3) return false;
+                if (pendientesMinDays === 15 && p.tier !== 0 && p.tier < 4) return false;
+                if (pendientesMinDays === 30 && p.tier !== 0 && p.tier < 5) return false;
+                return true;
+            });
+        }
+
         window.setPendientesFilter = function (days) {
             pendientesMinDays = parseInt(days) || 3;
+            renderLeaderboard();
+        };
+
+        window.setPendientesCoachFilter = function (email) {
+            pendientesCoachFilter = email || '';
             renderLeaderboard();
         };
 
@@ -3450,30 +3475,33 @@
         }
 
         // Renderiza la sección de cards fantasma (sin actividad reciente) abajo del leaderboard.
-        // Se calcula a partir de state.agents + state.entries + state.agentDetails. Cero queries.
+        // Cero queries: usa state.agents + state.entries + state.agentDetails.
+        // El badge en bottom nav refleja el TOTAL (no el filtrado) para señal global.
         function renderPendientesSection() {
             const section = document.getElementById('lb-mobile-pendientes');
             if (!section) return;
-            const pendientes = getPendientes();
+            const allPendientes = getPendientes();
+            const filtered = applyPendientesFilters(allPendientes);
 
-            // Actualizar badge en bottom nav
+            // Badge: TOTAL sin filtros (señal global)
             const badge = document.getElementById('equipo-pendientes-badge');
             if (badge) {
-                if (pendientes.length > 0) {
+                if (allPendientes.length > 0) {
                     badge.style.display = 'inline-flex';
-                    badge.textContent = pendientes.length > 99 ? '99+' : String(pendientes.length);
+                    badge.textContent = allPendientes.length > 99 ? '99+' : String(allPendientes.length);
                 } else {
                     badge.style.display = 'none';
                 }
             }
 
-            if (pendientes.length === 0) {
+            // Si no hay pendientes en absoluto, oculta la sección completa
+            if (allPendientes.length === 0) {
                 section.style.display = 'none';
                 return;
             }
             section.style.display = 'block';
 
-            // Filtro: opciones del dropdown
+            // Opciones del filtro de tiempo
             const filterOpts = [
                 { val: 3,  label: 'Hace 3 días' },
                 { val: 7,  label: 'Hace 1 semana' },
@@ -3481,38 +3509,60 @@
                 { val: 30, label: 'Hace 1 mes' }
             ].map(o => `<option value="${o.val}" ${pendientesMinDays === o.val ? 'selected' : ''}>${o.label}</option>`).join('');
 
-            const cardsHtml = pendientes.map(p => {
-                const tierClass = `tier-${p.tier}`;
-                const secondLine = p.secondLine
-                    ? `<div class="lb-ghost-second-line">${escapeHtml(p.secondLine)}</div>`
-                    : '';
-                const coachLine = p.coachName
-                    ? `<div class="lb-ghost-coach">Coach: ${escapeHtml(p.coachName)}</div>`
-                    : '';
-                return `
-                    <div class="lb-ghost-card ${tierClass}">
-                        <div class="lb-ghost-icon">${p.icon}</div>
-                        <div class="lb-ghost-body">
-                            <div class="lb-ghost-name">${escapeHtml(p.name)}</div>
-                            <div class="lb-ghost-tier-label" style="color:${p.color};">${escapeHtml(p.label)}</div>
-                            ${secondLine}
-                            ${coachLine}
+            // Opciones del filtro de coach (solo coaches con al menos 1 pendiente activo)
+            const coachesConPendientes = new Set(allPendientes.map(p => p.coachEmail).filter(Boolean));
+            const coachOpts = '<option value="">Todos los coaches</option>' +
+                state.coaches
+                    .filter(c => c.status !== 'inactive' && coachesConPendientes.has(c.email))
+                    .sort((a, b) => (a.coachName || '').localeCompare(b.coachName || ''))
+                    .map(c => `<option value="${escapeHtml(c.email)}" ${pendientesCoachFilter === c.email ? 'selected' : ''}>${escapeHtml(c.coachName || c.email)}</option>`)
+                    .join('');
+
+            // Si los filtros activos dejan la lista vacía, mostrar empty state pero mantener
+            // los filtros visibles para que el usuario pueda relajarlos.
+            const cardsHtml = filtered.length === 0
+                ? `<div class="lb-mobile-empty" style="padding:24px 16px;font-size:13px;">Sin pendientes con los filtros actuales.</div>`
+                : filtered.map(p => {
+                    const tierClass = `tier-${p.tier}`;
+                    const secondLine = p.secondLine
+                        ? `<div class="lb-ghost-second-line">${escapeHtml(p.secondLine)}</div>`
+                        : '';
+                    const coachLine = p.coachName
+                        ? `<div class="lb-ghost-coach">Coach: ${escapeHtml(p.coachName)}</div>`
+                        : '';
+                    return `
+                        <div class="lb-ghost-card ${tierClass}">
+                            <div class="lb-ghost-icon">${p.icon}</div>
+                            <div class="lb-ghost-body">
+                                <div class="lb-ghost-name">${escapeHtml(p.name)}</div>
+                                <div class="lb-ghost-tier-label" style="color:${p.color};">${escapeHtml(p.label)}</div>
+                                ${secondLine}
+                                ${coachLine}
+                            </div>
                         </div>
-                    </div>
-                `;
-            }).join('');
+                    `;
+                }).join('');
+
+            // Contador en el título: si hay filtros activos, muestra "filtrados/total"
+            const countDisplay = filtered.length === allPendientes.length
+                ? String(allPendientes.length)
+                : `${filtered.length} / ${allPendientes.length}`;
 
             section.innerHTML = `
                 <div class="lb-pendientes-section">
                     <div class="lb-pendientes-header">
                         <div class="lb-pendientes-title">
                             <i class="fa fa-ghost"></i> Pendientes
-                            <span class="count">${pendientes.length}</span>
+                            <span class="count">${countDisplay}</span>
                         </div>
-                        <select class="lb-pendientes-filter" onchange="setPendientesFilter(this.value)">
-                            <option disabled>Mostrar desde:</option>
-                            ${filterOpts}
-                        </select>
+                        <div class="lb-pendientes-filters">
+                            <select class="lb-pendientes-filter" onchange="setPendientesCoachFilter(this.value)">
+                                ${coachOpts}
+                            </select>
+                            <select class="lb-pendientes-filter" onchange="setPendientesFilter(this.value)">
+                                ${filterOpts}
+                            </select>
+                        </div>
                     </div>
                     ${cardsHtml}
                 </div>
