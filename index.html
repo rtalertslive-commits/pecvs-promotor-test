@@ -2625,31 +2625,24 @@
 
                 <label class="notif-toggle-row" style="display:flex; align-items:center; justify-content:space-between; padding:12px 0; border-bottom:1px solid rgba(255,255,255,0.05); cursor:pointer;">
                     <div style="flex:1; min-width:0;">
-                        <div style="font-size:14px; color:#fff; font-weight:600;">📢 Anuncios del director</div>
-                        <div style="font-size:11px; color:var(--slate); margin-top:2px;">Broadcasts importantes del equipo.</div>
+                        <div style="font-size:14px; color:#fff; font-weight:600;">📢 Anuncios de la dirección</div>
+                        <div style="font-size:11px; color:var(--slate); margin-top:2px;">Broadcasts importantes del director.</div>
                     </div>
                     <input type="checkbox" id="notif-pref-anuncios" onchange="saveNotifPrefs()" style="width:22px; height:22px; accent-color:var(--gold); cursor:pointer; flex-shrink:0;" checked>
-                </label>
-
-                <label class="notif-toggle-row" style="display:flex; align-items:center; justify-content:space-between; padding:12px 0; border-bottom:1px solid rgba(255,255,255,0.05); cursor:pointer;">
-                    <div style="flex:1; min-width:0;">
-                        <div style="font-size:14px; color:#fff; font-weight:600;">🏆 Reconocimientos</div>
-                        <div style="font-size:11px; color:var(--slate); margin-top:2px;">Cuando ganás totopos o desbloqueás logros.</div>
-                    </div>
-                    <input type="checkbox" id="notif-pref-reconocimientos" onchange="saveNotifPrefs()" style="width:22px; height:22px; accent-color:var(--gold); cursor:pointer; flex-shrink:0;" checked>
                 </label>
 
                 <div style="padding:12px 0;">
                     <label style="display:flex; align-items:center; justify-content:space-between; cursor:pointer;">
                         <div style="flex:1; min-width:0;">
-                            <div style="font-size:14px; color:#fff; font-weight:600;">⏰ Recordatorio diario</div>
-                            <div style="font-size:11px; color:var(--slate); margin-top:2px;">Te avisamos si no reportaste actividad.</div>
+                            <div style="font-size:14px; color:#fff; font-weight:600;">🎯 Objetivo diario del equipo</div>
+                            <div style="font-size:11px; color:var(--slate); margin-top:2px;">Te avisamos cuando tu equipo llegue al monto del día.</div>
                         </div>
-                        <input type="checkbox" id="notif-pref-recordatorio" onchange="onRecordatorioToggle()" style="width:22px; height:22px; accent-color:var(--gold); cursor:pointer; flex-shrink:0;">
+                        <input type="checkbox" id="notif-pref-objetivo" onchange="onObjetivoToggle()" style="width:22px; height:22px; accent-color:var(--gold); cursor:pointer; flex-shrink:0;" checked>
                     </label>
-                    <div id="notif-recordatorio-time-row" style="display:none; margin-top:10px; padding:8px 10px; background:rgba(0,0,0,0.2); border-radius:6px; align-items:center; gap:10px;">
-                        <span style="font-size:12px; color:rgba(255,255,255,0.7); font-weight:600;">Hora:</span>
-                        <input type="time" id="notif-pref-recordatorio-time" onchange="saveNotifPrefs()" value="19:00" style="flex:1; background:rgba(255,255,255,0.08); color:#fff; border:1px solid rgba(255,255,255,0.15); border-radius:6px; padding:6px 8px; font-size:14px; font-family:inherit;">
+                    <div id="notif-objetivo-input-row" style="display:flex; margin-top:10px; padding:8px 10px; background:rgba(0,0,0,0.2); border-radius:6px; align-items:center; gap:8px;">
+                        <span style="font-size:12px; color:rgba(255,255,255,0.7); font-weight:600;">Umbral:</span>
+                        <span style="font-size:14px; color:var(--gold); font-weight:700;">$</span>
+                        <input type="number" id="notif-pref-objetivo-amount" value="5000" min="0" step="500" onchange="saveNotifPrefs()" style="flex:1; background:rgba(255,255,255,0.08); color:#fff; border:1px solid rgba(255,255,255,0.15); border-radius:6px; padding:6px 8px; font-size:14px; font-family:inherit;">
                     </div>
                 </div>
 
@@ -2829,15 +2822,19 @@
         const COLS = ['P', 'E', 'C', 'V', 'S'];
         const MONTHS_ES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
 
-        // notifPrefs por defecto: anuncios+reconocimientos ON, recordatorio OFF a las 19:00.
+        // notifPrefs por defecto del promotor: solo 2 tipos — anuncios de la dirección
+        // y objetivo diario del equipo (umbral configurable, default $5000).
         // subscribed=true por defecto (first-time = enabled si acepta el banner).
         // bannerDismissed=false → mostrar banner si perm=default.
         const DEFAULT_NOTIF_PREFS = {
             subscribed: true,
             bannerDismissed: false,
             anuncios: true,
-            reconocimientos: true,
-            recordatorio: { enabled: false, time: '19:00' }
+            objetivoDiario: {
+                enabled: true,
+                threshold: 5000,       // monto MXN — configurable
+                lastFiredDate: ''      // "YYYY-MM-DD" (TZ MX) — empty = aún no se disparó hoy
+            }
         };
 
         // state for Promoter: tracks promoter info, all coaches under them, their agents and entries
@@ -3490,36 +3487,43 @@
         function loadNotifPrefsIntoUI() {
             const p = state.notifPrefs || DEFAULT_NOTIF_PREFS;
             const anuncios = document.getElementById('notif-pref-anuncios');
-            const reconoc  = document.getElementById('notif-pref-reconocimientos');
-            const record   = document.getElementById('notif-pref-recordatorio');
-            const recordT  = document.getElementById('notif-pref-recordatorio-time');
-            const recordRow= document.getElementById('notif-recordatorio-time-row');
+            const objetivo = document.getElementById('notif-pref-objetivo');
+            const objAmt   = document.getElementById('notif-pref-objetivo-amount');
+            const objRow   = document.getElementById('notif-objetivo-input-row');
             if (anuncios) anuncios.checked = !!p.anuncios;
-            if (reconoc)  reconoc.checked  = !!p.reconocimientos;
-            const rec = (p.recordatorio && typeof p.recordatorio === 'object') ? p.recordatorio : DEFAULT_NOTIF_PREFS.recordatorio;
-            if (record)   record.checked = !!rec.enabled;
-            if (recordT)  recordT.value  = rec.time || '19:00';
-            if (recordRow) recordRow.style.display = rec.enabled ? 'flex' : 'none';
+            const obj = (p.objetivoDiario && typeof p.objetivoDiario === 'object')
+                ? p.objetivoDiario
+                : DEFAULT_NOTIF_PREFS.objetivoDiario;
+            if (objetivo) objetivo.checked = !!obj.enabled;
+            if (objAmt)   objAmt.value     = obj.threshold || DEFAULT_NOTIF_PREFS.objetivoDiario.threshold;
+            if (objRow)   objRow.style.display = obj.enabled ? 'flex' : 'none';
         }
 
-        window.onRecordatorioToggle = function () {
-            const checkbox = document.getElementById('notif-pref-recordatorio');
-            const row = document.getElementById('notif-recordatorio-time-row');
+        window.onObjetivoToggle = function () {
+            const checkbox = document.getElementById('notif-pref-objetivo');
+            const row = document.getElementById('notif-objetivo-input-row');
             if (row) row.style.display = (checkbox && checkbox.checked) ? 'flex' : 'none';
             window.saveNotifPrefs();
         };
+
+        // Stub legacy — el toggle del recordatorio ya no existe en la UI del promotor,
+        // pero dejamos la función definida por compatibilidad con código viejo.
+        window.onRecordatorioToggle = function () { window.saveNotifPrefs(); };
 
         let _saveNotifPrefsTimer = null;
         window.saveNotifPrefs = function () {
             if (!user) return;
             const anuncios = !!document.getElementById('notif-pref-anuncios')?.checked;
-            const reconoc  = !!document.getElementById('notif-pref-reconocimientos')?.checked;
-            const recordEn = !!document.getElementById('notif-pref-recordatorio')?.checked;
-            const recordT  = document.getElementById('notif-pref-recordatorio-time')?.value || '19:00';
+            const objEn    = !!document.getElementById('notif-pref-objetivo')?.checked;
+            const objAmt   = parseInt(document.getElementById('notif-pref-objetivo-amount')?.value || '5000', 10);
+            const prevLastFired = state.notifPrefs?.objetivoDiario?.lastFiredDate || '';
             const newPrefs = {
                 anuncios,
-                reconocimientos: reconoc,
-                recordatorio: { enabled: recordEn, time: recordT }
+                objetivoDiario: {
+                    enabled: objEn,
+                    threshold: isNaN(objAmt) || objAmt < 0 ? 5000 : objAmt,
+                    lastFiredDate: prevLastFired
+                }
             };
             state.notifPrefs = Object.assign(state.notifPrefs || {}, newPrefs);
             if (_saveNotifPrefsTimer) clearTimeout(_saveNotifPrefsTimer);
@@ -3689,7 +3693,16 @@
                 state.directorCode = data.directorCode || '';
                 state.regionName = data.regionName || '';
                 // notifPrefs: merge defaults con lo que esté en Firestore (defensivo).
+                // Solo 2 tipos: anuncios + objetivoDiario. Si vienen prefs viejas
+                // (reconocimientos / recordatorio) se preservan en el doc pero no se usan.
                 state.notifPrefs = { ...DEFAULT_NOTIF_PREFS, ...(data.notifPrefs || {}) };
+                if (!state.notifPrefs.objetivoDiario || typeof state.notifPrefs.objetivoDiario !== 'object') {
+                    state.notifPrefs.objetivoDiario = { ...DEFAULT_NOTIF_PREFS.objetivoDiario };
+                } else {
+                    if (typeof state.notifPrefs.objetivoDiario.enabled !== 'boolean') state.notifPrefs.objetivoDiario.enabled = DEFAULT_NOTIF_PREFS.objetivoDiario.enabled;
+                    if (typeof state.notifPrefs.objetivoDiario.threshold !== 'number') state.notifPrefs.objetivoDiario.threshold = DEFAULT_NOTIF_PREFS.objetivoDiario.threshold;
+                    if (typeof state.notifPrefs.objetivoDiario.lastFiredDate !== 'string') state.notifPrefs.objetivoDiario.lastFiredDate = '';
+                }
                 // Store the embedded coaches array as fallback (from hierarchy loader)
                 state.embeddedCoaches = Array.isArray(data.coaches) ? data.coaches : [];
                 // team-display vive ahora dentro del modal Configuración (#disp-mycode); el header ya no lo muestra.
