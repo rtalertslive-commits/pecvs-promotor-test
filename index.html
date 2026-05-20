@@ -1650,6 +1650,9 @@
                 </div>
             </div>
             <div class="header-right">
+                <button id="promoter-anuncios-btn" class="btn btn-sm" onclick="openAnunciosPromoterModal()" title="Mandar anuncio">
+                    <i class="fa fa-bullhorn"></i> Anuncios
+                </button>
                 <button class="btn btn-sm" onclick="openConfig()"><i class="fa fa-cog"></i> Configuración</button>
                 <button id="logout-btn" class="btn btn-red btn-sm" onclick="logout()"><i class="fa fa-sign-out"></i>
                     Salir</button>
@@ -2431,6 +2434,58 @@
             <h2 style="color:var(--red); font-family:'Playfair Display',serif; margin-bottom:8px;">Acceso Revocado</h2>
             <p style="color:var(--slate); font-size:13px; margin-bottom:20px;">Tu acceso al sistema ha sido revocado. Contacta al director si crees que es un error.</p>
             <button onclick="doSignOut()" style="width:100%; padding:12px; border-radius:10px; background:none; border:1px solid rgba(255,255,255,0.15); color:var(--slate); font-size:13px; cursor:pointer;">Salir</button>
+        </div>
+    </div>
+
+    <!-- ANUNCIOS MODAL (promoter) — compose + history -->
+    <div class="modal-overlay" id="promoter-anuncios-modal">
+        <div class="modal-box" style="max-width:600px;">
+            <button class="modal-close" onclick="closeAnunciosPromoterModal()">&times;</button>
+            <h2><i class="fa fa-bullhorn"></i> Anuncios</h2>
+            <p style="font-size:12px; color:var(--slate); margin:0 0 16px;">Mandá broadcasts a <b>tus coaches y agentes</b>. Reciben push notification (si tienen las notifs activadas) y aparece en su bocina.</p>
+
+            <div style="display:flex; gap:6px; margin-bottom:18px; border-bottom:1px solid rgba(255,255,255,0.08); padding-bottom:0;">
+                <button id="anuncios-subtab-mandar-p" class="lb-subtab-btn active" onclick="switchAnunciosSubtabPromoter('mandar')" style="flex:1; padding:10px;">📢 Mandar</button>
+                <button id="anuncios-subtab-historial-p" class="lb-subtab-btn" onclick="switchAnunciosSubtabPromoter('historial')" style="flex:1; padding:10px;">📜 Historial</button>
+            </div>
+
+            <div id="anuncios-view-mandar-p">
+                <div style="display:flex; flex-direction:column; gap:14px;">
+                    <div>
+                        <label class="field-label">Título <span style="color:var(--red);">*</span></label>
+                        <input type="text" id="ann-input-title-p" placeholder="Ej. Junta del viernes" maxlength="80">
+                    </div>
+                    <div>
+                        <label class="field-label">Mensaje <span style="color:var(--red);">*</span></label>
+                        <textarea id="ann-input-body-p" placeholder="Equipo, recordá..." maxlength="400" rows="4" style="resize:vertical; width:100%; padding:10px; background:rgba(255,255,255,0.04); color:#fff; border:1px solid rgba(255,255,255,0.15); border-radius:8px; font-family:inherit; font-size:14px;"></textarea>
+                        <p style="font-size:10px; color:var(--slate); margin-top:4px;"><span id="ann-body-counter-p">0</span>/400 caracteres</p>
+                    </div>
+                    <div>
+                        <label class="field-label">Mandar a:</label>
+                        <div style="display:flex; flex-direction:column; gap:8px; padding:10px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.10); border-radius:8px;">
+                            <label style="display:flex; align-items:center; gap:10px; cursor:pointer; padding:4px 0;">
+                                <input type="checkbox" id="ann-target-agentes-p" checked style="width:18px; height:18px; accent-color:var(--gold);">
+                                <span style="color:#fff; font-size:14px;">👤 Agentes de mis coaches</span>
+                            </label>
+                            <label style="display:flex; align-items:center; gap:10px; cursor:pointer; padding:4px 0;">
+                                <input type="checkbox" id="ann-target-coaches-p" checked style="width:18px; height:18px; accent-color:var(--gold);">
+                                <span style="color:#fff; font-size:14px;">🧑‍🏫 Mis coaches</span>
+                            </label>
+                        </div>
+                        <p style="font-size:10px; color:var(--slate); margin-top:4px;">Solo aplicará a quienes están en <b>tu equipo</b> (coaches con tu promotorTeamCode).</p>
+                    </div>
+                    <div id="ann-status-p" style="display:none; padding:10px; border-radius:6px; font-size:13px; font-weight:600;"></div>
+                    <button id="ann-send-btn-p" class="btn btn-green" onclick="sendAnuncioPromoter()" style="margin-top:8px;">
+                        <i class="fa fa-paper-plane"></i> Mandar anuncio
+                    </button>
+                </div>
+            </div>
+
+            <div id="anuncios-view-historial-p" style="display:none;">
+                <div id="anuncios-history-list-p" style="display:flex; flex-direction:column; gap:10px; min-height:120px;">
+                    <div style="text-align:center; padding:20px; color:var(--slate);">Cargando…</div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -3421,6 +3476,150 @@
         }
 
         // ─── CONFIG ──────────────────────────────────────────────────────────────────
+        // ═══ ANUNCIOS (promoter) — compose + history ═══
+        // Crea docs en /announcements con targetPromotorTeamCode = state.promotorCode,
+        // que la Cloud Function usa para fanear a los coaches + agentes bajo este promotor.
+
+        window.openAnunciosPromoterModal = function () {
+            const titleEl = document.getElementById('ann-input-title-p');
+            const bodyEl  = document.getElementById('ann-input-body-p');
+            const counter = document.getElementById('ann-body-counter-p');
+            const status  = document.getElementById('ann-status-p');
+            if (titleEl) titleEl.value = '';
+            if (bodyEl)  bodyEl.value  = '';
+            if (counter) counter.textContent = '0';
+            if (status)  status.style.display = 'none';
+            switchAnunciosSubtabPromoter('mandar');
+            document.getElementById('promoter-anuncios-modal').classList.add('open');
+        };
+
+        window.closeAnunciosPromoterModal = function () {
+            document.getElementById('promoter-anuncios-modal').classList.remove('open');
+        };
+
+        window.switchAnunciosSubtabPromoter = function (which) {
+            const btnM = document.getElementById('anuncios-subtab-mandar-p');
+            const btnH = document.getElementById('anuncios-subtab-historial-p');
+            const viewM = document.getElementById('anuncios-view-mandar-p');
+            const viewH = document.getElementById('anuncios-view-historial-p');
+            if (which === 'historial') {
+                btnM.classList.remove('active'); btnH.classList.add('active');
+                viewM.style.display = 'none'; viewH.style.display = '';
+                renderAnunciosHistoryPromoter();
+            } else {
+                btnH.classList.remove('active'); btnM.classList.add('active');
+                viewH.style.display = 'none'; viewM.style.display = '';
+            }
+        };
+
+        document.addEventListener('input', (e) => {
+            if (e.target && e.target.id === 'ann-input-body-p') {
+                const counter = document.getElementById('ann-body-counter-p');
+                if (counter) counter.textContent = String(e.target.value.length);
+            }
+        });
+
+        window.sendAnuncioPromoter = async function () {
+            const titleEl  = document.getElementById('ann-input-title-p');
+            const bodyEl   = document.getElementById('ann-input-body-p');
+            const statusEl = document.getElementById('ann-status-p');
+            const btn      = document.getElementById('ann-send-btn-p');
+            const tAgentes = document.getElementById('ann-target-agentes-p').checked;
+            const tCoaches = document.getElementById('ann-target-coaches-p').checked;
+
+            const title = (titleEl.value || '').trim();
+            const body  = (bodyEl.value  || '').trim();
+            const targetRoles = [];
+            if (tAgentes) targetRoles.push('users');
+            if (tCoaches) targetRoles.push('coaches');
+
+            const showError = (msg) => {
+                statusEl.style.display = '';
+                statusEl.style.background = 'rgba(239,68,68,0.15)';
+                statusEl.style.color = '#fca5a5';
+                statusEl.style.border = '1px solid rgba(239,68,68,0.3)';
+                statusEl.textContent = '❌ ' + msg;
+            };
+            if (!title) { showError('Falta el título.'); return; }
+            if (!body)  { showError('Falta el mensaje.'); return; }
+            if (!targetRoles.length) { showError('Elegí al menos un destinatario.'); return; }
+            if (!state.promotorCode) { showError('No se detectó tu código de promotor.'); return; }
+            if (!confirm(`¿Mandar anuncio "${title}" a tu equipo?\n\nVan a recibir push notification.`)) return;
+
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Enviando…';
+            statusEl.style.display = '';
+            statusEl.style.background = 'rgba(59,130,246,0.15)';
+            statusEl.style.color = '#93c5fd';
+            statusEl.style.border = '1px solid rgba(59,130,246,0.3)';
+            statusEl.textContent = '⏳ Guardando anuncio…';
+
+            try {
+                const docRef = await addDoc(collection(db, 'announcements'), {
+                    title,
+                    body,
+                    createdAt: new Date().toISOString(),
+                    createdBy: user.email,
+                    createdByName: state.promoterName || user.displayName || user.email,
+                    senderRole: 'promoter',
+                    targetPromotorTeamCode: state.promotorCode,
+                    targetRoles,
+                    sentTo: 0,
+                    readBy: []
+                });
+                statusEl.style.background = 'rgba(16,185,129,0.15)';
+                statusEl.style.color = '#6ee7b7';
+                statusEl.style.border = '1px solid rgba(16,185,129,0.3)';
+                statusEl.innerHTML = '✅ Anuncio guardado. La Cloud Function ya está mandando los pushes.<br><span style="font-size:11px; opacity:0.7;">ID: ' + docRef.id + '</span>';
+                titleEl.value = ''; bodyEl.value = '';
+                document.getElementById('ann-body-counter-p').textContent = '0';
+            } catch (err) {
+                console.error('[anuncios] sendAnuncio error:', err);
+                showError('Error guardando: ' + (err.message || err));
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa fa-paper-plane"></i> Mandar anuncio';
+            }
+        };
+
+        async function renderAnunciosHistoryPromoter() {
+            const listEl = document.getElementById('anuncios-history-list-p');
+            if (!listEl) return;
+            listEl.innerHTML = '<div style="text-align:center; padding:20px; color:var(--slate);">Cargando…</div>';
+            try {
+                const q = query(collection(db, 'announcements'), where('targetPromotorTeamCode', '==', state.promotorCode));
+                const snap = await getDocs(q);
+                if (snap.empty) {
+                    listEl.innerHTML = `<div style="text-align:center; padding:40px 20px;">
+                        <div style="font-size:48px; opacity:0.3; margin-bottom:12px;">📜</div>
+                        <div style="font-size:14px; color:var(--slate); font-weight:600;">No mandaste ningún anuncio todavía</div>
+                    </div>`;
+                    return;
+                }
+                const items = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                items.sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
+                listEl.innerHTML = items.map(a => {
+                    const dt = a.createdAt ? new Date(a.createdAt).toLocaleString('es-MX', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : '';
+                    const roles = (a.targetRoles || []).map(r => r === 'users' ? 'Agentes' : (r === 'coaches' ? 'Coaches' : r)).join(', ');
+                    return `<div style="padding:12px 14px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:8px;">
+                        <div style="display:flex; justify-content:space-between; gap:10px; margin-bottom:6px;">
+                            <div style="font-weight:700; color:var(--gold-l); font-size:14px;">${escapeHtml(a.title || '')}</div>
+                            <div style="font-size:11px; color:var(--slate); white-space:nowrap;">${dt}</div>
+                        </div>
+                        <div style="font-size:13px; color:rgba(255,255,255,0.85); margin-bottom:8px; line-height:1.4;">${escapeHtml(a.body || '')}</div>
+                        <div style="font-size:11px; color:var(--slate); display:flex; gap:14px; flex-wrap:wrap;">
+                            <span><i class="fa fa-users"></i> ${escapeHtml(roles)}</span>
+                            <span><i class="fa fa-paper-plane"></i> Enviado a ${a.sentTo || 0}</span>
+                            <span><i class="fa fa-check-double"></i> Leído por ${(a.readBy || []).length}</span>
+                        </div>
+                    </div>`;
+                }).join('');
+            } catch (err) {
+                console.error('[anuncios] renderHistory error:', err);
+                listEl.innerHTML = '<div style="text-align:center; padding:20px; color:#fca5a5;">Error: ' + escapeHtml(err.message || String(err)) + '</div>';
+            }
+        }
+
         window.openConfig = function () {
             const nameEl = document.getElementById('disp-myname');
             const codeEl = document.getElementById('disp-mycode');
