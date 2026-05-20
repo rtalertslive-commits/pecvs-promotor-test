@@ -310,11 +310,24 @@
             border-radius: 50%;
             flex-shrink: 0;
             position: relative;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;  /* fix: ícono centrado dentro del círculo */
         }
         #notif-bell-btn i,
         #promoter-anuncios-btn i {
             font-size: 15px;
             margin: 0;
+        }
+        /* Override btn sizing en el header row-menu para igualar al agente
+           (el .btn-sm global del promotor es más chico que el del agente) */
+        .header .row-menu .btn,
+        .header .row-menu .btn-sm {
+            padding: 8px 12px;
+            font-size: 12px;
+            border-radius: 8px;
+            gap: 7px;
+            justify-content: center;
         }
         /* Badge numérico para anuncios sin leer (rojo, esquina superior derecha) */
         #promoter-anuncios-badge {
