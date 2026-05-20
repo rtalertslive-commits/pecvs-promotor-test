@@ -230,6 +230,70 @@
             align-items: center;
             flex-wrap: wrap;
         }
+        /* Bell — circular, icon-only, visualmente distinto del menu de user */
+        #notif-bell-btn {
+            width: 38px;
+            height: 38px;
+            padding: 0;
+            border-radius: 50%;
+            flex-shrink: 0;
+            position: relative;
+        }
+        #notif-bell-btn i {
+            font-size: 15px;
+            margin: 0;
+        }
+        /* Megáfono también con badge numérico */
+        #promoter-anuncios-btn {
+            position: relative;
+        }
+        #promoter-anuncios-badge {
+            position: absolute;
+            top: -6px;
+            right: -6px;
+            min-width: 18px;
+            height: 18px;
+            padding: 0 5px;
+            background: #ef4444;
+            color: #fff;
+            border-radius: 9px;
+            font-size: 10px;
+            font-weight: 800;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid var(--panel, #0f172a);
+            line-height: 1;
+        }
+        #promoter-anuncios-badge.show { display: flex; }
+        @keyframes bellPulseGold {
+            0%   { box-shadow: 0 0 0 0 rgba(212,175,55,0.7); transform: scale(1); }
+            50%  { box-shadow: 0 0 0 10px rgba(212,175,55,0); transform: scale(1.06); }
+            100% { box-shadow: 0 0 0 0 rgba(212,175,55,0); transform: scale(1); }
+        }
+        #notif-bell-btn.bell-pulsing {
+            animation: bellPulseGold 1.6s ease-in-out infinite;
+            background: rgba(212,175,55,0.18) !important;
+            border-color: var(--gold,#d4af37) !important;
+            color: var(--gold,#d4af37) !important;
+        }
+        #notif-bell-btn.bell-pulsing i { color: var(--gold,#d4af37); }
+        /* Push permission banner */
+        #push-banner.show { display:flex !important; }
+        /* Toast in-app (foreground push) */
+        .in-app-toast {
+            position:fixed; top:20px; left:50%; transform:translate(-50%,-100px);
+            min-width:280px; max-width:90vw;
+            background:linear-gradient(135deg,#1e293b,#0f172a);
+            border:1px solid rgba(212,175,55,0.4);
+            border-radius:12px; padding:14px 18px;
+            box-shadow:0 8px 32px rgba(0,0,0,0.5);
+            z-index:10005;
+            transition:transform 0.3s ease-out;
+        }
+        .in-app-toast.show { transform:translate(-50%,0); }
+        .in-app-toast .toast-title { color:var(--gold,#d4af37); font-weight:800; font-size:15px; margin-bottom:3px; }
+        .in-app-toast .toast-body { color:#fff; font-size:13px; line-height:1.4; }
 
         /* BUTTONS */
         .btn {
@@ -1650,8 +1714,13 @@
                 </div>
             </div>
             <div class="header-right">
-                <button id="promoter-anuncios-btn" class="btn btn-sm" onclick="openAnunciosPromoterModal()" title="Mandar anuncio">
+                <button id="notif-bell-btn" class="btn btn-sm" onclick="openNotifModal()" title="Notificaciones">
+                    <i class="fa fa-bell"></i>
+                    <span id="notif-bell-dot" style="display:none; position:absolute; top:6px; right:6px; width:9px; height:9px; background:var(--gold); border-radius:50%; border:1.5px solid var(--panel, #0f172a);"></span>
+                </button>
+                <button id="promoter-anuncios-btn" class="btn btn-sm" onclick="openAnunciosPromoterModal()" title="Anuncios">
                     <i class="fa fa-bullhorn"></i> Anuncios
+                    <span id="promoter-anuncios-badge">0</span>
                 </button>
                 <button class="btn btn-sm" onclick="openConfig()"><i class="fa fa-cog"></i> Configuración</button>
                 <button id="logout-btn" class="btn btn-red btn-sm" onclick="logout()"><i class="fa fa-sign-out"></i>
@@ -2437,6 +2506,78 @@
         </div>
     </div>
 
+    <!-- PUSH PERMISSION BANNER (compacto, sin copy extra) -->
+    <div id="push-banner" style="display:none; position:fixed; top:0; left:0; right:0; z-index:9999; background:linear-gradient(135deg,#1e3a8a,#0f172a); padding:12px 16px; border-bottom:1px solid rgba(212,175,55,0.3); box-shadow:0 4px 16px rgba(0,0,0,0.4); align-items:center; gap:10px;">
+        <div style="font-size:22px; flex-shrink:0;">🔔</div>
+        <div style="flex:1; color:#fff; font-size:15px; font-weight:700;">¿Activar notificaciones?</div>
+        <button onclick="requestPushPermission()" style="padding:8px 14px; background:var(--gold,#d4af37); color:#000; border:none; border-radius:8px; font-weight:800; font-size:13px; cursor:pointer; white-space:nowrap;">Aceptar</button>
+        <button onclick="dismissPushBanner()" style="padding:8px 12px; background:rgba(255,255,255,0.08); color:rgba(255,255,255,0.85); border:1px solid rgba(255,255,255,0.15); border-radius:8px; font-weight:700; font-size:13px; cursor:pointer; white-space:nowrap;">Rechazar</button>
+    </div>
+
+    <!-- NOTIFICATIONS MODAL — gestionar suscripción y prefs por tipo -->
+    <div class="modal-overlay" id="notif-modal">
+        <div class="modal-box">
+            <h2 style="font-family:'Playfair Display',serif; color:var(--gold); margin-top:0;"><i class="fa fa-bell" style="margin-right:8px;"></i>Notificaciones</h2>
+            <p style="font-size:12px; color:var(--slate); margin:0 0 18px;">Recibí avisos importantes del director y reconocimientos directamente en tu dispositivo.</p>
+
+            <label id="notif-master-row" style="display:none; align-items:center; justify-content:space-between; padding:14px 16px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); border-radius:10px; margin-bottom:12px; cursor:pointer; gap:12px;">
+                <div style="flex:1; min-width:0;">
+                    <div id="notif-master-title" style="font-size:15px; color:#fff; font-weight:700;">Notificaciones</div>
+                    <div id="notif-master-sub" style="font-size:12px; color:var(--slate); margin-top:3px;">Cargando…</div>
+                </div>
+                <input type="checkbox" id="notif-master-toggle" onchange="onMasterToggle()" style="width:26px; height:26px; accent-color:var(--gold); cursor:pointer; flex-shrink:0;">
+            </label>
+
+            <div id="notif-status" style="display:none; font-size:13px; font-weight:600; color:#fff; margin-bottom:12px; line-height:1.4; padding:12px 14px; background:rgba(255,255,255,0.04); border-radius:10px;">Cargando…</div>
+            <button id="notif-action-btn" class="btn btn-sm" style="display:none; width:100%; margin-bottom:10px;" onclick="onNotifActionClick()">Activar notificaciones</button>
+
+            <div id="notif-prefs" style="display:none; margin-top:8px; padding-top:14px; border-top:1px solid rgba(255,255,255,0.08);">
+                <div style="font-size:11px; color:var(--slate); font-weight:700; margin-bottom:10px; letter-spacing:0.5px;">RECIBIR AVISOS DE:</div>
+
+                <label class="notif-toggle-row" style="display:flex; align-items:center; justify-content:space-between; padding:12px 0; border-bottom:1px solid rgba(255,255,255,0.05); cursor:pointer;">
+                    <div style="flex:1; min-width:0;">
+                        <div style="font-size:14px; color:#fff; font-weight:600;">📢 Anuncios del director</div>
+                        <div style="font-size:11px; color:var(--slate); margin-top:2px;">Broadcasts importantes del equipo.</div>
+                    </div>
+                    <input type="checkbox" id="notif-pref-anuncios" onchange="saveNotifPrefs()" style="width:22px; height:22px; accent-color:var(--gold); cursor:pointer; flex-shrink:0;" checked>
+                </label>
+
+                <label class="notif-toggle-row" style="display:flex; align-items:center; justify-content:space-between; padding:12px 0; border-bottom:1px solid rgba(255,255,255,0.05); cursor:pointer;">
+                    <div style="flex:1; min-width:0;">
+                        <div style="font-size:14px; color:#fff; font-weight:600;">🏆 Reconocimientos</div>
+                        <div style="font-size:11px; color:var(--slate); margin-top:2px;">Cuando ganás totopos o desbloqueás logros.</div>
+                    </div>
+                    <input type="checkbox" id="notif-pref-reconocimientos" onchange="saveNotifPrefs()" style="width:22px; height:22px; accent-color:var(--gold); cursor:pointer; flex-shrink:0;" checked>
+                </label>
+
+                <div style="padding:12px 0;">
+                    <label style="display:flex; align-items:center; justify-content:space-between; cursor:pointer;">
+                        <div style="flex:1; min-width:0;">
+                            <div style="font-size:14px; color:#fff; font-weight:600;">⏰ Recordatorio diario</div>
+                            <div style="font-size:11px; color:var(--slate); margin-top:2px;">Te avisamos si no reportaste actividad.</div>
+                        </div>
+                        <input type="checkbox" id="notif-pref-recordatorio" onchange="onRecordatorioToggle()" style="width:22px; height:22px; accent-color:var(--gold); cursor:pointer; flex-shrink:0;">
+                    </label>
+                    <div id="notif-recordatorio-time-row" style="display:none; margin-top:10px; padding:8px 10px; background:rgba(0,0,0,0.2); border-radius:6px; align-items:center; gap:10px;">
+                        <span style="font-size:12px; color:rgba(255,255,255,0.7); font-weight:600;">Hora:</span>
+                        <input type="time" id="notif-pref-recordatorio-time" onchange="saveNotifPrefs()" value="19:00" style="flex:1; background:rgba(255,255,255,0.08); color:#fff; border:1px solid rgba(255,255,255,0.15); border-radius:6px; padding:6px 8px; font-size:14px; font-family:inherit;">
+                    </div>
+                </div>
+
+                <div id="notif-prefs-saved" style="display:none; font-size:11px; color:#34d399; margin-top:6px; text-align:right;">✓ Guardado</div>
+            </div>
+
+            <details style="margin-top:14px;">
+                <summary style="font-size:10px; color:rgba(255,255,255,0.4); cursor:pointer; user-select:none;">Diagnóstico técnico</summary>
+                <div id="notif-debug" style="font-size:10px; color:rgba(255,255,255,0.5); font-family:monospace; margin-top:6px; word-break:break-all;"></div>
+                <div id="notif-last-result" style="display:none; font-size:11px; font-family:monospace; padding:6px 8px; background:rgba(0,0,0,0.3); border-radius:6px; margin-top:6px; word-break:break-all; line-height:1.4;"></div>
+            </details>
+
+            <button class="btn btn-sm" style="margin-top:18px; width:100%;"
+                onclick="closeNotifModal()">Cerrar</button>
+        </div>
+    </div>
+
     <!-- ANUNCIOS MODAL (promoter) — compose + history -->
     <div class="modal-overlay" id="promoter-anuncios-modal">
         <div class="modal-box" style="max-width:600px;">
@@ -2445,11 +2586,29 @@
             <p style="font-size:12px; color:var(--slate); margin:0 0 16px;">Mandá broadcasts a <b>tus coaches y agentes</b>. Reciben push notification (si tienen las notifs activadas) y aparece en su bocina.</p>
 
             <div style="display:flex; gap:6px; margin-bottom:18px; border-bottom:1px solid rgba(255,255,255,0.08); padding-bottom:0;">
-                <button id="anuncios-subtab-mandar-p" class="lb-subtab-btn active" onclick="switchAnunciosSubtabPromoter('mandar')" style="flex:1; padding:10px;">📢 Mandar</button>
+                <button id="anuncios-subtab-recibidos-p" class="lb-subtab-btn active" onclick="switchAnunciosSubtabPromoter('recibidos')" style="flex:1; padding:10px;">📥 Recibidos <span id="anuncios-recibidos-badge" style="display:none; background:#ef4444; color:#fff; border-radius:9px; font-size:10px; font-weight:800; padding:1px 6px; margin-left:4px;">0</span></button>
+                <button id="anuncios-subtab-mandar-p" class="lb-subtab-btn" onclick="switchAnunciosSubtabPromoter('mandar')" style="flex:1; padding:10px;">📢 Mandar</button>
                 <button id="anuncios-subtab-historial-p" class="lb-subtab-btn" onclick="switchAnunciosSubtabPromoter('historial')" style="flex:1; padding:10px;">📜 Historial</button>
             </div>
 
-            <div id="anuncios-view-mandar-p">
+            <!-- ── SUB-VIEW: RECIBIDOS — anuncios del director ── -->
+            <div id="anuncios-view-recibidos-p">
+                <!-- Bulk actions -->
+                <div id="anuncios-bulk-actions-p" style="display:none; gap:8px; margin-bottom:14px; flex-wrap:wrap;">
+                    <button id="anuncios-mark-all-btn-p" onclick="markAllAnunciosRead()" class="btn btn-sm" style="flex:1; min-width:130px; padding:7px 10px; font-size:11px;"><i class="fa fa-check-double"></i> Marcar leídos</button>
+                    <button id="anuncios-clear-read-btn-p" onclick="clearReadAnuncios()" class="btn btn-sm" style="flex:1; min-width:130px; padding:7px 10px; font-size:11px;"><i class="fa fa-broom"></i> Limpiar leídos</button>
+                    <button onclick="clearAllAnuncios()" class="btn btn-sm" style="flex:1; min-width:130px; padding:7px 10px; font-size:11px; border-color:rgba(239,68,68,0.5); color:#f87171;"><i class="fa fa-trash-can"></i> Limpiar todos</button>
+                </div>
+                <div id="anuncios-list-p" style="display:flex; flex-direction:column; gap:10px; min-height:120px;">
+                    <div id="anuncios-empty-p" style="text-align:center; padding:40px 20px;">
+                        <div style="font-size:48px; opacity:0.3; margin-bottom:12px;">📥</div>
+                        <div style="font-size:14px; color:var(--slate); font-weight:600;">No tenés anuncios recibidos</div>
+                        <div style="font-size:12px; color:rgba(255,255,255,0.4); line-height:1.5;">Cuando el director mande un anuncio, va a aparecer acá.</div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="anuncios-view-mandar-p" style="display:none;">
                 <div style="display:flex; flex-direction:column; gap:14px;">
                     <div>
                         <label class="field-label">Título <span style="color:var(--red);">*</span></label>
@@ -2549,7 +2708,8 @@
         // --- IMPORT FIREBASE ---
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, getDoc, getDocs, addDoc, collection, query, where, onSnapshot, runTransaction } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, getDoc, getDocs, addDoc, collection, query, where, onSnapshot, runTransaction, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getMessaging, getToken, onMessage, isSupported as isMessagingSupported } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging.js";
 
         // Initialize
         const app = initializeApp(firebaseConfig);
@@ -2557,10 +2717,39 @@
         const db = getFirestore(app);
         const provider = new GoogleAuthProvider();
 
+        // Messaging — puede no estar soportado en ciertos browsers/contextos.
+        const VAPID_KEY = "BDPXKyOCeao8o3KNkBidAtt3g_qH2UWqWv8Y5Ea7BA4_Q_U2_CndW37Bweh1tHVAyuYLQDtKLc_BpPjet3Gi-l4";
+        let messaging = null;
+        isMessagingSupported().then(supported => {
+            if (supported) {
+                messaging = getMessaging(app);
+                onMessage(messaging, payload => {
+                    console.log('[push] Foreground message:', payload);
+                    const title = (payload.notification && payload.notification.title) || 'PECVS$';
+                    const body  = (payload.notification && payload.notification.body)  || '';
+                    showInAppToast(title, body);
+                });
+                console.log('[push] Messaging soportado e inicializado');
+            } else {
+                console.log('[push] Messaging NO soportado en este browser/contexto');
+            }
+        });
+
         // ─── STATE ───────────────────────────────────────────────────────────────────
         const DAYS = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
         const COLS = ['P', 'E', 'C', 'V', 'S'];
         const MONTHS_ES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+
+        // notifPrefs por defecto: anuncios+reconocimientos ON, recordatorio OFF a las 19:00.
+        // subscribed=true por defecto (first-time = enabled si acepta el banner).
+        // bannerDismissed=false → mostrar banner si perm=default.
+        const DEFAULT_NOTIF_PREFS = {
+            subscribed: true,
+            bannerDismissed: false,
+            anuncios: true,
+            reconocimientos: true,
+            recordatorio: { enabled: false, time: '19:00' }
+        };
 
         // state for Promoter: tracks promoter info, all coaches under them, their agents and entries
         // coachesMap: { [coachEmail]: { coachName, teamCode, agents: [names], reportes: [], reclutamiento: [] } }
@@ -2580,7 +2769,8 @@
             agentCoachMap: {},  // {agentName -> coachEmail}
             embeddedCoaches: [], // fallback cache from promoter doc
             karma: 0,
-            karmaLog: []
+            karmaLog: [],
+            notifPrefs: { ...DEFAULT_NOTIF_PREFS }
         };
         let user = null;
         let serverNow = null;
@@ -2726,6 +2916,543 @@
             signOut(auth).then(() => location.reload());
         };
 
+        // ─── PUSH NOTIFICATIONS ──────────────────────────────────────────────────────
+        // Estados browser-level (no controlables programáticamente):
+        //   - perm 'default'  → nunca preguntado al OS
+        //   - perm 'granted'  → el OS permite
+        //   - perm 'denied'   → el OS bloquea — solo Ajustes del iPhone arregla
+        // Estados app-level (state.notifPrefs):
+        //   - subscribed:       master switch — si el user quiere recibir pushes
+        //   - bannerDismissed:  rechazó el banner → no aparece más automáticamente
+        async function subscribeToPush() {
+            if (!user) return;
+            if (!messaging) { console.log('[push] skip: messaging no disponible'); return; }
+            if (!('Notification' in window)) { console.log('[push] skip: Notification API ausente'); return; }
+            const isIOSDevice = /iPhone|iPad|iPod/i.test(navigator.userAgent) && !window.MSStream;
+            const isStandalone = window.matchMedia('(display-mode: standalone)').matches
+                || window.navigator.standalone === true;
+            if (isIOSDevice && !isStandalone) {
+                console.log('[push] skip: iOS Safari browser no soporta web push');
+                return;
+            }
+            const perm = Notification.permission;
+            const prefs = state.notifPrefs || DEFAULT_NOTIF_PREFS;
+            if (perm === 'denied') return;
+            if (perm === 'granted') {
+                if (prefs.subscribed !== false) {
+                    try { await registerPushToken(); }
+                    catch (e) { console.error('[push] silent register failed:', e); }
+                }
+                return;
+            }
+            // perm === 'default'
+            if (prefs.bannerDismissed) return;
+            showPushPermissionBanner();
+        }
+
+        async function registerPushToken() {
+            if (!messaging) throw new Error('messaging no inicializado');
+            if (!user) throw new Error('no hay user logueado');
+            _setLastPushResult('Obteniendo token de FCM…', false);
+            const reg = await navigator.serviceWorker.ready;
+            let token;
+            try {
+                token = await getToken(messaging, { vapidKey: VAPID_KEY, serviceWorkerRegistration: reg });
+            } catch (err) {
+                const msg = 'getToken falló: ' + (err && err.code ? err.code + ' — ' : '') + (err && err.message ? err.message : err);
+                _setLastPushResult(msg, true);
+                throw new Error(msg);
+            }
+            if (!token) {
+                const msg = 'getToken devolvió vacío (permiso revocado?)';
+                _setLastPushResult(msg, true);
+                throw new Error(msg);
+            }
+            _setLastPushResult('Token obtenido. Guardando en Firestore…', false);
+            const tokenId = token.substring(0, 40).replace(/[^a-zA-Z0-9_-]/g, '_');
+            try {
+                await setDoc(doc(db, 'promoters', user.email, 'pushTokens', tokenId), {
+                    token,
+                    createdAt: new Date().toISOString(),
+                    userAgent: navigator.userAgent,
+                    platform: _getPlatform()
+                }, { merge: true });
+            } catch (err) {
+                const msg = 'setDoc falló (¿reglas Firestore?): ' + (err && err.code ? err.code + ' — ' : '') + (err && err.message ? err.message : err);
+                _setLastPushResult(msg, true);
+                throw new Error(msg);
+            }
+            _setLastPushResult('✅ Token guardado: ' + token.substring(0, 30) + '…', false);
+            return token;
+        }
+
+        function _setLastPushResult(msg, isError) {
+            const el = document.getElementById('notif-last-result');
+            if (!el) return;
+            el.style.color = isError ? '#f87171' : '#34d399';
+            el.textContent = msg;
+            el.style.display = '';
+        }
+
+        function _getPlatform() {
+            const ua = navigator.userAgent;
+            if (/iPhone|iPad|iPod/i.test(ua)) return 'ios';
+            if (/Android/i.test(ua)) return 'android';
+            return 'desktop';
+        }
+
+        async function _setNotifPrefsField(updates) {
+            if (!user) return;
+            state.notifPrefs = state.notifPrefs || { ...DEFAULT_NOTIF_PREFS };
+            Object.assign(state.notifPrefs, updates);
+            try {
+                await setDoc(doc(db, 'promoters', user.email), { notifPrefs: state.notifPrefs }, { merge: true });
+            } catch (err) { console.error('[notifPrefs] save error:', err); }
+        }
+
+        async function unsubscribeFromPush() {
+            if (!user) return;
+            try {
+                const reg = await navigator.serviceWorker.ready;
+                const sub = await reg.pushManager.getSubscription();
+                if (sub) await sub.unsubscribe();
+            } catch (e) { console.warn('[push] pushManager.unsubscribe error:', e); }
+            try {
+                const tokensRef = collection(db, 'promoters', user.email, 'pushTokens');
+                const snap = await getDocs(tokensRef);
+                for (const d of snap.docs) {
+                    try { await deleteDoc(doc(db, 'promoters', user.email, 'pushTokens', d.id)); }
+                    catch (e) { console.warn('[push] token delete fail:', e); }
+                }
+            } catch (e) { console.warn('[push] tokens collection read error:', e); }
+        }
+
+        window.requestPushPermission = async function () {
+            hidePushPermissionBanner();
+            try {
+                let result = Notification.permission;
+                if (result === 'default') {
+                    result = await Notification.requestPermission();
+                }
+                if (result === 'granted') {
+                    await registerPushToken();
+                    await _setNotifPrefsField({ subscribed: true, bannerDismissed: false });
+                    showInAppToast('✅ Notificaciones activadas', 'Vas a recibir avisos importantes.');
+                } else if (result === 'denied') {
+                    await _setNotifPrefsField({ subscribed: false });
+                    showInAppToast('🚫 Permiso denegado', 'Podés activarlo desde Ajustes del iPhone.');
+                }
+            } catch (err) {
+                console.error('[push] requestPermission error:', err);
+                showInAppToast('❌ Error', err.message || String(err));
+            }
+            if (typeof window.updateNotifStatus === 'function') window.updateNotifStatus();
+        };
+
+        window.dismissPushBanner = async function () {
+            hidePushPermissionBanner();
+            await _setNotifPrefsField({ bannerDismissed: true, subscribed: false });
+        };
+
+        function showPushPermissionBanner() {
+            const banner = document.getElementById('push-banner');
+            if (banner) banner.classList.add('show');
+            const bell = document.getElementById('notif-bell-btn');
+            const dot  = document.getElementById('notif-bell-dot');
+            if (bell) bell.classList.add('bell-pulsing');
+            if (dot)  dot.style.display = '';
+        }
+        function hidePushPermissionBanner() {
+            const banner = document.getElementById('push-banner');
+            if (banner) banner.classList.remove('show');
+            const bell = document.getElementById('notif-bell-btn');
+            const dot  = document.getElementById('notif-bell-dot');
+            if (bell) bell.classList.remove('bell-pulsing');
+            if (dot)  dot.style.display = 'none';
+        }
+
+        window.openNotifModal = function () {
+            const banner = document.getElementById('push-banner');
+            if (banner) banner.classList.remove('show');
+            const bell = document.getElementById('notif-bell-btn');
+            const dot  = document.getElementById('notif-bell-dot');
+            if (bell) bell.classList.remove('bell-pulsing');
+            if (dot)  dot.style.display = 'none';
+            document.getElementById('notif-modal').classList.add('open');
+            window.updateNotifStatus();
+        };
+
+        window.closeNotifModal = function () {
+            document.getElementById('notif-modal').classList.remove('open');
+        };
+
+        // ─── ANUNCIOS LISTENER (PROMOTER SCOPE: director → promoters) ───────────────
+        // Promotor escucha 1 scope: anuncios del director con targetRoles incluyendo 'promoters'.
+        let _anunciosUnsubs = [];       // array de unsubscribe functions
+        let _anunciosDict = {};          // { [id]: { id, ...data } } — dedup natural
+        let _anunciosCache = [];         // array ordenado, derivado del dict para render
+
+        function _rebuildAnunciosCache() {
+            const myId = user?.email || '';
+            // Excluir los que el user ocultó manualmente (hiddenBy)
+            _anunciosCache = Object.values(_anunciosDict)
+                .filter(a => !(a.hiddenBy || []).includes(myId))
+                .sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
+            const unread = _anunciosCache.filter(a => !(a.readBy || []).includes(myId)).length;
+            updateAnunciosBadge(unread);
+            const modal = document.getElementById('promoter-anuncios-modal');
+            const recibView = document.getElementById('anuncios-view-recibidos-p');
+            if (modal && modal.classList.contains('open') && recibView && recibView.style.display !== 'none') {
+                renderAnunciosListPromoter();
+            }
+        }
+
+        function _handleAnunciosSnapshot(snap) {
+            snap.docChanges().forEach(change => {
+                if (change.type === 'removed') {
+                    delete _anunciosDict[change.doc.id];
+                } else {
+                    _anunciosDict[change.doc.id] = { id: change.doc.id, ...change.doc.data() };
+                }
+            });
+            _rebuildAnunciosCache();
+        }
+
+        async function startAnunciosListener() {
+            if (!user) return;
+            stopAnunciosListener();
+
+            // Promoter scope ÚNICO: anuncios del director con targetRoles incluyendo 'promoters'
+            if (state.directorCode) {
+                const qDirector = query(
+                    collection(db, 'announcements'),
+                    where('targetDirectorCode', '==', state.directorCode),
+                    where('targetRoles', 'array-contains', 'promoters')
+                );
+                _anunciosUnsubs.push(onSnapshot(qDirector, _handleAnunciosSnapshot,
+                    (err) => console.error('[anuncios] director listener:', err)));
+            }
+        }
+
+        function stopAnunciosListener() {
+            _anunciosUnsubs.forEach(u => { try { u(); } catch(e){} });
+            _anunciosUnsubs = [];
+            _anunciosDict = {};
+            _anunciosCache = [];
+        }
+
+        function renderAnunciosListPromoter() {
+            const empty    = document.getElementById('anuncios-empty-p');
+            const listEl   = document.getElementById('anuncios-list-p');
+            const markBtn  = document.getElementById('anuncios-mark-all-btn-p');
+            const bulkBar  = document.getElementById('anuncios-bulk-actions-p');
+            const clearReadBtn = document.getElementById('anuncios-clear-read-btn-p');
+            const myId     = user?.email || '';
+
+            if (bulkBar) bulkBar.style.display = _anunciosCache.length ? 'flex' : 'none';
+
+            if (!_anunciosCache.length) {
+                if (empty) empty.style.display = '';
+                if (listEl) {
+                    Array.from(listEl.children).forEach(c => {
+                        if (c.id !== 'anuncios-empty-p') c.remove();
+                    });
+                }
+                return;
+            }
+            if (empty) empty.style.display = 'none';
+            const hasUnread = _anunciosCache.some(a => !(a.readBy || []).includes(myId));
+            const hasRead   = _anunciosCache.some(a =>  (a.readBy || []).includes(myId));
+            if (markBtn)       markBtn.style.display       = hasUnread ? '' : 'none';
+            if (clearReadBtn)  clearReadBtn.style.display  = hasRead ? '' : 'none';
+
+            if (listEl) {
+                Array.from(listEl.children).forEach(c => {
+                    if (c.id !== 'anuncios-empty-p') c.remove();
+                });
+                _anunciosCache.forEach(a => {
+                    const isUnread = !(a.readBy || []).includes(myId);
+                    const dt = a.createdAt ? new Date(a.createdAt).toLocaleString('es-MX',
+                        { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : '';
+                    const card = document.createElement('div');
+                    card.style.cssText = `position:relative; padding:12px 36px 12px 14px; background:${isUnread ? 'rgba(212,175,55,0.08)' : 'rgba(255,255,255,0.03)'};
+                        border:1px solid ${isUnread ? 'rgba(212,175,55,0.35)' : 'rgba(255,255,255,0.08)'};
+                        border-radius:8px; transition:background .15s;`;
+                    card.innerHTML = `
+                        <button onclick="event.stopPropagation(); hideAnuncio('${a.id}')" aria-label="Ocultar"
+                            style="position:absolute; top:8px; right:8px; width:24px; height:24px; padding:0; background:transparent; color:rgba(255,255,255,0.4); border:none; font-size:18px; line-height:1; cursor:pointer; border-radius:50%; display:flex; align-items:center; justify-content:center;">&times;</button>
+                        <div style="cursor:pointer;" data-mark-read>
+                            <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px; margin-bottom:6px; padding-right:8px;">
+                                <div style="font-weight:700; color:${isUnread ? 'var(--gold-l)' : '#fff'}; font-size:14px; line-height:1.3;">
+                                    ${isUnread ? '<span style="color:#ef4444; margin-right:4px;">●</span>' : ''}${escapeHtml(a.title || '')}
+                                </div>
+                                <div style="font-size:11px; color:var(--slate); white-space:nowrap; flex-shrink:0;">${dt}</div>
+                            </div>
+                            <div style="font-size:13px; color:rgba(255,255,255,0.85); line-height:1.45; margin-bottom:6px; white-space:pre-wrap;">${escapeHtml(a.body || '')}</div>
+                            <div style="font-size:10px; color:var(--slate);">— ${escapeHtml(a.createdByName || a.createdBy || '')}</div>
+                        </div>
+                    `;
+                    const inner = card.querySelector('[data-mark-read]');
+                    if (inner) inner.onclick = () => markAnuncioRead(a.id);
+                    listEl.appendChild(card);
+                });
+            }
+        }
+
+        // Actualiza tanto el badge en la sub-tab "Recibidos" como el del bullhorn header.
+        function updateAnunciosBadge(count) {
+            // Sub-tab badge
+            const subBadge = document.getElementById('anuncios-recibidos-badge');
+            if (subBadge) {
+                if (count > 0) {
+                    subBadge.textContent = count > 99 ? '99+' : String(count);
+                    subBadge.style.display = '';
+                } else {
+                    subBadge.style.display = 'none';
+                }
+            }
+            // Header bullhorn badge
+            const headerBadge = document.getElementById('promoter-anuncios-badge');
+            if (headerBadge) {
+                if (count > 0) {
+                    headerBadge.textContent = count > 99 ? '99+' : String(count);
+                    headerBadge.classList.add('show');
+                } else {
+                    headerBadge.classList.remove('show');
+                }
+            }
+        }
+
+        async function markAnuncioRead(annId) {
+            if (!user || !annId) return;
+            const myId = user.email;
+            const ann = _anunciosCache.find(a => a.id === annId);
+            if (!ann) return;
+            const readBy = Array.isArray(ann.readBy) ? ann.readBy : [];
+            if (readBy.includes(myId)) return;
+            try {
+                const newReadBy = [...new Set([...readBy, myId])];
+                await setDoc(doc(db, 'announcements', annId), { readBy: newReadBy }, { merge: true });
+            } catch (err) {
+                console.error('[anuncios] mark read error:', err);
+            }
+        }
+
+        window.markAllAnunciosRead = async function () {
+            if (!user) return;
+            const myId = user.email;
+            const unread = _anunciosCache.filter(a => !(a.readBy || []).includes(myId));
+            for (const a of unread) {
+                await markAnuncioRead(a.id);
+            }
+        };
+
+        // Oculta un anuncio para mí (otros lo siguen viendo). También lo marca como leído.
+        window.hideAnuncio = async function (annId) {
+            if (!user || !annId) return;
+            const myId = user.email;
+            const ann = _anunciosDict[annId];
+            if (!ann) return;
+            const hiddenBy = Array.isArray(ann.hiddenBy) ? ann.hiddenBy : [];
+            const readBy   = Array.isArray(ann.readBy)   ? ann.readBy   : [];
+            if (hiddenBy.includes(myId)) return;
+            try {
+                const newHiddenBy = [...new Set([...hiddenBy, myId])];
+                const newReadBy   = [...new Set([...readBy, myId])];
+                await setDoc(doc(db, 'announcements', annId),
+                    { hiddenBy: newHiddenBy, readBy: newReadBy }, { merge: true });
+            } catch (err) {
+                console.error('[anuncios] hide error:', err);
+            }
+        };
+
+        window.clearReadAnuncios = async function () {
+            if (!user) return;
+            const myId = user.email;
+            const toHide = _anunciosCache.filter(a => (a.readBy || []).includes(myId));
+            for (const a of toHide) {
+                await hideAnuncio(a.id);
+            }
+        };
+
+        window.clearAllAnuncios = async function () {
+            if (!user) return;
+            if (!confirm('¿Ocultar todos los anuncios? Esta acción solo afecta tu vista — el director y otros usuarios siguen viéndolos.')) return;
+            const all = [..._anunciosCache];
+            for (const a of all) {
+                await hideAnuncio(a.id);
+            }
+        };
+
+        function showInAppToast(title, body) {
+            const toast = document.createElement('div');
+            toast.className = 'in-app-toast';
+            toast.innerHTML = `
+                <div class="toast-title">${escapeHtml(title)}</div>
+                <div class="toast-body">${escapeHtml(body)}</div>
+            `;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.classList.add('show'), 50);
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 300);
+            }, 5000);
+        }
+
+        window.updateNotifStatus = function () {
+            const statusEl     = document.getElementById('notif-status');
+            const debugEl      = document.getElementById('notif-debug');
+            const btnEl        = document.getElementById('notif-action-btn');
+            const masterRow    = document.getElementById('notif-master-row');
+            const masterToggle = document.getElementById('notif-master-toggle');
+            const masterSub    = document.getElementById('notif-master-sub');
+            const prefsPanel   = document.getElementById('notif-prefs');
+            if (!statusEl || !btnEl) return;
+            const isIOSDevice = /iPhone|iPad|iPod/i.test(navigator.userAgent) && !window.MSStream;
+            const isStandalone = window.matchMedia('(display-mode: standalone)').matches
+                || window.navigator.standalone === true;
+            const hasNotifAPI = ('Notification' in window);
+            const perm        = hasNotifAPI ? Notification.permission : 'no-api';
+            const messagingOK = !!messaging;
+            const prefs       = state.notifPrefs || DEFAULT_NOTIF_PREFS;
+            const subscribed  = prefs.subscribed !== false;
+            if (debugEl) {
+                debugEl.textContent = [
+                    'platform=' + (isIOSDevice ? 'iOS' : (/Android/i.test(navigator.userAgent) ? 'Android' : 'Desktop')),
+                    'standalone=' + isStandalone,
+                    'perm=' + perm,
+                    'subscribed=' + subscribed,
+                    'bannerDismissed=' + (prefs.bannerDismissed === true)
+                ].join(' · ');
+            }
+            const showStatus = (html) => { statusEl.style.display = ''; statusEl.innerHTML = html; };
+            const hideStatus = () => { statusEl.style.display = 'none'; };
+            const showMaster = (show) => { if (masterRow) masterRow.style.display = show ? 'flex' : 'none'; };
+            const showPrefs  = (show) => { if (prefsPanel) prefsPanel.style.display = show ? 'block' : 'none'; };
+            btnEl.style.display = 'none';
+            if (isIOSDevice && !isStandalone) {
+                showStatus('⚠️ <b>Instalá la app como PWA primero.</b> Compartir → Agregar a inicio.');
+                showMaster(false); showPrefs(false); return;
+            }
+            if (!hasNotifAPI) {
+                showStatus('❌ Este navegador no soporta notificaciones.');
+                showMaster(false); showPrefs(false); return;
+            }
+            if (!messagingOK) {
+                showStatus('❌ Firebase Messaging no disponible en este contexto.');
+                showMaster(false); showPrefs(false); return;
+            }
+            if (perm === 'denied') {
+                if (isIOSDevice) {
+                    showStatus('🚫 <b style="color:#f87171;">Bloqueadas en iOS.</b><br><span style="font-size:11px; color:var(--slate);">Ajustes → Notificaciones → buscá esta app → Permitir.</span>');
+                } else {
+                    showStatus('🚫 <b style="color:#f87171;">Bloqueadas.</b><br><span style="font-size:11px; color:var(--slate);">Candado al lado de la URL → Notificaciones → Permitir. Refrescá.</span>');
+                }
+                showMaster(false); showPrefs(false); return;
+            }
+            hideStatus();
+            showMaster(true);
+            const isOn = (perm === 'granted' && subscribed);
+            if (masterToggle) masterToggle.checked = isOn;
+            if (masterSub) {
+                masterSub.textContent = isOn
+                    ? 'Tu dispositivo recibe avisos del director.'
+                    : 'Activá para recibir avisos importantes.';
+                masterSub.style.color = isOn ? '#34d399' : 'var(--slate)';
+            }
+            if (isOn) { showPrefs(true); loadNotifPrefsIntoUI(); }
+            else { showPrefs(false); }
+        };
+
+        window.onMasterToggle = async function () {
+            const toggle = document.getElementById('notif-master-toggle');
+            if (!toggle || !user) return;
+            const wantOn = toggle.checked;
+            toggle.disabled = true;
+            try {
+                if (wantOn) {
+                    let perm = Notification.permission;
+                    if (perm === 'default') perm = await Notification.requestPermission();
+                    if (perm === 'granted') {
+                        await registerPushToken();
+                        await _setNotifPrefsField({ subscribed: true, bannerDismissed: false });
+                        showInAppToast('✅ Notificaciones activadas', 'Vas a recibir avisos importantes.');
+                    } else if (perm === 'denied') {
+                        toggle.checked = false;
+                        showInAppToast('🚫 Bloqueado por iOS', 'Activá desde Ajustes del iPhone.');
+                    } else {
+                        toggle.checked = false;
+                    }
+                } else {
+                    await unsubscribeFromPush();
+                    await _setNotifPrefsField({ subscribed: false });
+                    showInAppToast('🔕 Desactivadas', 'No vas a recibir más notificaciones.');
+                }
+            } catch (err) {
+                console.error('[push] master toggle error:', err);
+                showInAppToast('❌ Error', err.message || String(err));
+                toggle.checked = !wantOn;
+            } finally {
+                toggle.disabled = false;
+                window.updateNotifStatus();
+            }
+        };
+
+        function loadNotifPrefsIntoUI() {
+            const p = state.notifPrefs || DEFAULT_NOTIF_PREFS;
+            const anuncios = document.getElementById('notif-pref-anuncios');
+            const reconoc  = document.getElementById('notif-pref-reconocimientos');
+            const record   = document.getElementById('notif-pref-recordatorio');
+            const recordT  = document.getElementById('notif-pref-recordatorio-time');
+            const recordRow= document.getElementById('notif-recordatorio-time-row');
+            if (anuncios) anuncios.checked = !!p.anuncios;
+            if (reconoc)  reconoc.checked  = !!p.reconocimientos;
+            const rec = (p.recordatorio && typeof p.recordatorio === 'object') ? p.recordatorio : DEFAULT_NOTIF_PREFS.recordatorio;
+            if (record)   record.checked = !!rec.enabled;
+            if (recordT)  recordT.value  = rec.time || '19:00';
+            if (recordRow) recordRow.style.display = rec.enabled ? 'flex' : 'none';
+        }
+
+        window.onRecordatorioToggle = function () {
+            const checkbox = document.getElementById('notif-pref-recordatorio');
+            const row = document.getElementById('notif-recordatorio-time-row');
+            if (row) row.style.display = (checkbox && checkbox.checked) ? 'flex' : 'none';
+            window.saveNotifPrefs();
+        };
+
+        let _saveNotifPrefsTimer = null;
+        window.saveNotifPrefs = function () {
+            if (!user) return;
+            const anuncios = !!document.getElementById('notif-pref-anuncios')?.checked;
+            const reconoc  = !!document.getElementById('notif-pref-reconocimientos')?.checked;
+            const recordEn = !!document.getElementById('notif-pref-recordatorio')?.checked;
+            const recordT  = document.getElementById('notif-pref-recordatorio-time')?.value || '19:00';
+            const newPrefs = {
+                anuncios,
+                reconocimientos: reconoc,
+                recordatorio: { enabled: recordEn, time: recordT }
+            };
+            state.notifPrefs = Object.assign(state.notifPrefs || {}, newPrefs);
+            if (_saveNotifPrefsTimer) clearTimeout(_saveNotifPrefsTimer);
+            _saveNotifPrefsTimer = setTimeout(async () => {
+                try {
+                    await setDoc(doc(db, 'promoters', user.email), { notifPrefs: state.notifPrefs }, { merge: true });
+                    const ok = document.getElementById('notif-prefs-saved');
+                    if (ok) {
+                        ok.style.display = '';
+                        setTimeout(() => { if (ok) ok.style.display = 'none'; }, 1500);
+                    }
+                } catch (err) {
+                    console.error('[notifPrefs] save error:', err);
+                    showInAppToast('❌ Error guardando preferencias', err.message || String(err));
+                }
+            }, 400);
+        };
+
+        window.onNotifActionClick = async function () {
+            window.requestPushPermission();
+        };
+
         onAuthStateChanged(auth, async (u) => {
             if (u) {
                 // Detectar cambio de usuario y forzar recarga (evita data leak en memoria)
@@ -2743,6 +3470,8 @@
                     await loadPromoterData();
                     startPromoterDocListener(); // real-time updates desde Firestore
                     init();
+                    subscribeToPush().catch(err => console.error('[push] subscribeToPush:', err));
+                    startAnunciosListener();
                 } else if (status === 'inactive') {
                     document.getElementById('login-overlay').classList.add('hidden');
                     document.getElementById('revoked-overlay').style.display = 'flex';
@@ -2870,6 +3599,8 @@
                 // directorCode = what the promoter enters to link to their director
                 state.directorCode = data.directorCode || '';
                 state.regionName = data.regionName || '';
+                // notifPrefs: merge defaults con lo que esté en Firestore (defensivo).
+                state.notifPrefs = { ...DEFAULT_NOTIF_PREFS, ...(data.notifPrefs || {}) };
                 // Store the embedded coaches array as fallback (from hierarchy loader)
                 state.embeddedCoaches = Array.isArray(data.coaches) ? data.coaches : [];
                 document.getElementById('team-display').textContent = 'Mi código: ' + (state.promotorCode || state.teamCode || 'Sin Código');
@@ -3489,7 +4220,9 @@
             if (bodyEl)  bodyEl.value  = '';
             if (counter) counter.textContent = '0';
             if (status)  status.style.display = 'none';
-            switchAnunciosSubtabPromoter('mandar');
+            // Default to Recibidos (primer tab); arrancar listener si todavía no.
+            switchAnunciosSubtabPromoter('recibidos');
+            startAnunciosListener();
             document.getElementById('promoter-anuncios-modal').classList.add('open');
         };
 
@@ -3498,17 +4231,29 @@
         };
 
         window.switchAnunciosSubtabPromoter = function (which) {
+            const btnR = document.getElementById('anuncios-subtab-recibidos-p');
             const btnM = document.getElementById('anuncios-subtab-mandar-p');
             const btnH = document.getElementById('anuncios-subtab-historial-p');
+            const viewR = document.getElementById('anuncios-view-recibidos-p');
             const viewM = document.getElementById('anuncios-view-mandar-p');
             const viewH = document.getElementById('anuncios-view-historial-p');
+            // Reset all
+            [btnR, btnM, btnH].forEach(b => b && b.classList.remove('active'));
+            if (viewR) viewR.style.display = 'none';
+            if (viewM) viewM.style.display = 'none';
+            if (viewH) viewH.style.display = 'none';
             if (which === 'historial') {
-                btnM.classList.remove('active'); btnH.classList.add('active');
-                viewM.style.display = 'none'; viewH.style.display = '';
+                if (btnH) btnH.classList.add('active');
+                if (viewH) viewH.style.display = '';
                 renderAnunciosHistoryPromoter();
+            } else if (which === 'mandar') {
+                if (btnM) btnM.classList.add('active');
+                if (viewM) viewM.style.display = '';
             } else {
-                btnH.classList.remove('active'); btnM.classList.add('active');
-                viewH.style.display = 'none'; viewM.style.display = '';
+                // 'recibidos' default
+                if (btnR) btnR.classList.add('active');
+                if (viewR) viewR.style.display = '';
+                renderAnunciosListPromoter();
             }
         };
 
