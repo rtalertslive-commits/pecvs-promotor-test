@@ -127,12 +127,14 @@
 
         /* Filas del header */
         .header .row-brand,
+        .header .row-info,
         .header .row-menu {
             display: flex;
             align-items: center;
             gap: 10px;
         }
         .header .row-brand { justify-content: space-between; }
+        .header .row-info { flex-wrap: wrap; }
         .header .row-menu { gap: 8px; }
         .header .row-menu .btn { flex: 1; }
 
@@ -145,9 +147,20 @@
                 gap: 14px;
             }
             .header .row-brand { flex: 0 0 auto; }
-            .header .row-menu  { flex: 0 0 auto; }
+            .header .row-info  { flex: 1 1 auto; justify-content: center; }
+            .header .row-menu  { flex: 0 0 auto; margin-left: auto; }
             .header .row-menu .btn { flex: 0 0 auto; }
         }
+
+        /* Karma badge compacto cuando vive en el header */
+        .header #karma-badge {
+            padding: 4px 10px 4px 8px;
+            margin-top: 0;
+            border-radius: 18px;
+        }
+        .header #karma-badge .star { font-size: 14px; }
+        .header #karma-badge .karma-num { font-size: 14px; letter-spacing: 0.5px; }
+        .header #karma-badge .karma-lbl { font-size: 9px; letter-spacing: 1.2px; }
 
         /* Brand block: monograma + título + version tag */
         .brand-block { display: flex; align-items: center; gap: 10px; min-width: 0; }
@@ -1757,7 +1770,7 @@
             <!-- Row 1: brand (logo + título + versión) + icon buttons (bell, bocina) -->
             <div class="row-brand">
                 <div class="brand-block">
-                    <div class="brand-mono">A</div>
+                    <div class="brand-mono">P</div>
                     <div class="brand-title">
                         <h1>Actividad</h1>
                         <span class="version-tag" data-app-version>—</span>
@@ -1775,7 +1788,16 @@
                 </div>
             </div>
 
-            <!-- Row 2: user menu (Configuración + Salir). team-display vive en el modal Configuración (MI CLAVE DE PROMOTOR). -->
+            <!-- Row 2: karma badge inline (totopos del promotor) -->
+            <div class="row-info">
+                <div id="karma-badge" aria-label="Tus totopos">
+                    <span class="star"><svg class="totopo-icon"><use href="#totopo"/></svg></span>
+                    <span class="karma-num" id="karma-value">0</span>
+                    <span class="karma-lbl">totopos</span>
+                </div>
+            </div>
+
+            <!-- Row 3: user menu (Configuración + Salir). MI CLAVE DE PROMOTOR vive en el modal Configuración. -->
             <div class="row-menu">
                 <button class="btn btn-sm" onclick="openConfig()"><i class="fa fa-cog"></i> Configuración</button>
                 <button id="logout-btn" class="btn btn-red btn-sm" onclick="logout()"><i class="fa fa-sign-out"></i> Salir</button>
