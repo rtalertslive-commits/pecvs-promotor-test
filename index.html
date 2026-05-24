@@ -370,6 +370,17 @@
         }
         #promoter-novedades-badge.show { display: flex; }
 
+        /* Glow dorado pulsante para botones nuevos del producto. */
+        .novedad-glow {
+            position: relative;
+            animation: novedadGlowPulse 1.6s ease-in-out infinite;
+            border-radius: 8px;
+        }
+        @keyframes novedadGlowPulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(212, 175, 55, 0.65); }
+            50%      { box-shadow: 0 0 0 10px rgba(212, 175, 55, 0); }
+        }
+
         @keyframes bellPulseGold {
             0%   { box-shadow: 0 0 0 0 rgba(212,175,55,0.7); transform: scale(1); }
             50%  { box-shadow: 0 0 0 10px rgba(212,175,55,0); transform: scale(1.06); }
@@ -3527,6 +3538,42 @@
             }
         }
 
+        // ─── GLOW DE FEATURES NUEVAS (automático, controlado por código) ─────
+        const NEW_FEATURES_TO_GLOW = [
+            { feature: 'novedades', selector: '#promoter-novedades-btn' },
+        ];
+
+        function applyFeatureGlows() {
+            if (!user) return;
+            const seen = (state && state.seenFeatures) || {};
+            NEW_FEATURES_TO_GLOW.forEach(({ feature, selector }) => {
+                const el = document.querySelector(selector);
+                if (!el) return;
+                if (seen[feature]) {
+                    el.classList.remove('novedad-glow');
+                } else {
+                    el.classList.add('novedad-glow');
+                    _attachFeatureGlowHandler(el, feature);
+                }
+            });
+        }
+
+        function _attachFeatureGlowHandler(el, feature) {
+            if (el.dataset.featureGlowKey === feature) return;
+            el.dataset.featureGlowKey = feature;
+            el.addEventListener('click', async () => {
+                if (!user) return;
+                state.seenFeatures = Object.assign({}, state.seenFeatures || {}, { [feature]: true });
+                el.classList.remove('novedad-glow');
+                try {
+                    await setDoc(doc(db, 'promoters', user.email),
+                        { seenFeatures: state.seenFeatures }, { merge: true });
+                } catch (err) {
+                    console.error('[featureGlow] save error:', err);
+                }
+            });
+        }
+
         function showInAppToast(title, body) {
             const toast = document.createElement('div');
             toast.className = 'in-app-toast';
@@ -3723,6 +3770,7 @@
                     subscribeToPush().catch(err => console.error('[push] subscribeToPush:', err));
                     startAnunciosListener();
                     startNovedadesListener();
+                    applyFeatureGlows();
                 } else if (status === 'inactive') {
                     document.getElementById('login-overlay').classList.add('hidden');
                     document.getElementById('revoked-overlay').style.display = 'flex';
@@ -3842,6 +3890,7 @@
                 state.ventaCarrera = data.ventaCarrera || [];
                 state.karma = data.karma || 0;
                 state.karmaLog = data.karmaLog || [];
+                state.seenFeatures = (data.seenFeatures && typeof data.seenFeatures === 'object') ? data.seenFeatures : {};
                 state.teamCode = data.teamCode || '';
                 state.companyCode = data.companyCode || '';
                 state.promotorNum = data.promotorNum || null;
