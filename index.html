@@ -370,17 +370,6 @@
         }
         #promoter-novedades-badge.show { display: flex; }
 
-        /* Glow dorado pulsante para botones referenciados por novedades unread. */
-        .novedad-glow {
-            position: relative;
-            animation: novedadGlowPulse 1.6s ease-in-out infinite;
-            border-radius: 8px;
-        }
-        @keyframes novedadGlowPulse {
-            0%, 100% { box-shadow: 0 0 0 0 rgba(212, 175, 55, 0.65); }
-            50%      { box-shadow: 0 0 0 10px rgba(212, 175, 55, 0); }
-        }
-
         @keyframes bellPulseGold {
             0%   { box-shadow: 0 0 0 0 rgba(212,175,55,0.7); transform: scale(1); }
             50%  { box-shadow: 0 0 0 10px rgba(212,175,55,0); transform: scale(1.06); }
@@ -3434,15 +3423,6 @@
         let _novedadesUnsub = null;
         let _novedadesCache = [];
 
-        // Map: highlightKey → selector del elemento DOM en esta app (promotor).
-        // Los anuncios/novedades en promotor usan prefix 'promoter-' por convención local.
-        const NOVEDAD_HIGHLIGHT_SELECTORS = {
-            notif:     '#notif-bell-btn',
-            anuncios:  '#promoter-anuncios-btn',
-            novedades: '#promoter-novedades-btn',
-            karma:     '#karma-badge',
-        };
-
         async function startNovedadesListener() {
             if (!user) return;
             stopNovedadesListener();
@@ -3456,44 +3436,10 @@
                     .sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
                 const unread = _novedadesCache.filter(n => !(n.readBy || []).includes(myId)).length;
                 updateNovedadesBadge(unread);
-                applyNovedadGlows();
                 if (document.getElementById('novedades-modal').classList.contains('open')) {
                     renderNovedadesList();
                 }
             }, (err) => console.error('[novedades] listener:', err));
-        }
-
-        function applyNovedadGlows() {
-            if (!user) return;
-            const myId = user?.email || '';
-            const activeKeys = new Set();
-            _novedadesCache.forEach(n => {
-                if (n.highlightKey && !(n.readBy || []).includes(myId)) {
-                    activeKeys.add(n.highlightKey);
-                }
-            });
-            Object.entries(NOVEDAD_HIGHLIGHT_SELECTORS).forEach(([key, selector]) => {
-                const el = document.querySelector(selector);
-                if (!el) return;
-                if (activeKeys.has(key)) {
-                    el.classList.add('novedad-glow');
-                    _attachNovedadGlowHandler(el, key);
-                } else {
-                    el.classList.remove('novedad-glow');
-                }
-            });
-        }
-
-        function _attachNovedadGlowHandler(el, key) {
-            if (el.dataset.novedadGlowKey === key) return;
-            el.dataset.novedadGlowKey = key;
-            el.addEventListener('click', () => {
-                const myId = user?.email || '';
-                const related = _novedadesCache.filter(n =>
-                    n.highlightKey === key && !(n.readBy || []).includes(myId)
-                );
-                related.forEach(n => markNovedadRead(n.id));
-            });
         }
 
         function stopNovedadesListener() {
