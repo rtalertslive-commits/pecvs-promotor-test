@@ -1,4 +1,4 @@
-const CACHE_NAME = 'pecvs-promotor-v3.6.2';
+const CACHE_NAME = 'pecvs-promotor-v3.6.3';
 const assets = [
     './',
     './index.html',
