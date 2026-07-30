@@ -1,4 +1,4 @@
-const CACHE_NAME = 'pecvs-promotor-v3.8.0';
+const CACHE_NAME = 'pecvs-promotor-v3.9.0';
 const assets = [
     './',
     './index.html',
@@ -84,6 +84,7 @@ self.addEventListener('activate', e => {
 // del PWA se queda en pantalla hasta que el browser aborta solo (30-120s).
 // Con 4s servimos cache y la app abre al instante; la próxima carga trae fresh.
 const NAV_TIMEOUT_MS = 4000;
+const LAST_RESORT_MS = 15000;
 
 self.addEventListener('fetch', e => {
     // Ignorar requests a dominios externos (Firebase, gstatic, etc.) — solo cacheamos same-origin
@@ -110,7 +111,12 @@ self.addEventListener('fetch', e => {
                 return res;
             } catch (err) {
                 if (cached) return cached;
-                return fetch(e.request);
+                // Timeout acotado: un fetch sin límite acá deja pantalla negra.
+                return await Promise.race([
+                    fetch(e.request),
+                    new Promise((_, reject) =>
+                        setTimeout(() => reject(new Error('sw-last-resort-timeout')), LAST_RESORT_MS))
+                ]);
             }
         })());
     } else {
