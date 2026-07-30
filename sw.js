@@ -1,4 +1,4 @@
-const CACHE_NAME = 'pecvs-promotor-v3.7.0';
+const CACHE_NAME = 'pecvs-promotor-v3.8.0';
 const assets = [
     './',
     './index.html',
@@ -99,7 +99,7 @@ self.addEventListener('fetch', e => {
 
             try {
                 const res = await Promise.race([
-                    fetch(e.request),
+                    fetch(e.request, { cache: 'no-store' }),
                     new Promise((_, reject) =>
                         setTimeout(() => reject(new Error('sw-nav-timeout')), NAV_TIMEOUT_MS))
                 ]);
