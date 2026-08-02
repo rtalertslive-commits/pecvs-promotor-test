@@ -10,7 +10,11 @@
         href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@700&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- defer: sin esto bloquea el parseo del HTML y si el CDN se cuelga la app
+         abre en NEGRO hasta que el sistema aborte la peticion. Chart solo se usa
+         dentro de renderCharts(), nunca al evaluar el modulo, asi que diferirlo
+         no rompe nada. -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
 
     <!-- PWA manifest + icon (gold radial bg + serif "P") -->
     <link rel="manifest" href="manifest.json">
@@ -488,15 +492,19 @@
         @media (max-width: 767px) {
             .tab-nav { display: none; }
             body { padding-bottom: calc(76px + env(safe-area-inset-bottom, 0px)); }
+        /* SIN backdrop-filter aqui. Sobre un fondo opaco el desenfoque no se
+           ve —esta difuminando algo que ya esta tapado— pero fuerza a la
+           barra a su propia capa de composicion, y eso es justo lo que
+           despega los position:fixed en Safari de iOS: durante el scroll por
+           inercia la barra se queda flotando a media pantalla en vez de
+           pegada abajo. Se quita el filtro y el fondo va opaco. */
             .bottom-nav {
                 display: flex;
                 position: fixed;
                 bottom: 0; left: 0; right: 0;
-                background: rgba(2, 6, 23, 0.92);
+                background: rgba(2, 6, 23, 1);
                 border-top: 1px solid var(--border);
                 padding: 8px 4px calc(10px + env(safe-area-inset-bottom, 0px));
-                backdrop-filter: blur(10px);
-                -webkit-backdrop-filter: blur(10px);
                 z-index: 100;
             }
         }
